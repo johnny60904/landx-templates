@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/badge/NuGet-LanDX.Templates-blue?logo=nuget)](https://www.nuget.org/packages/LanDX.Templates)
 [![NuGet](https://img.shields.io/badge/Package-Template-green?logo=nuget)](https://www.nuget.org/packages/LanDX.Templates)
-[![NuGet](https://img.shields.io/nuget/v/LanDX.Templates?label=NuGet&logo=nuget)](https://www.nuget.org/packages/LanDX.Templates/)
+[![NuGet](https://img.shields.io/nuget/v/LanDX.Templates?label=NuGet&logo=nuget&color=darkorange)](https://www.nuget.org/packages/LanDX.Templates/)
 
 [![Badge](https://img.shields.io/badge/Support-.NET_8-darkcyan?logo=dotnet)](https://dotnet.microsoft.com/zh-tw/download/dotnet/8.0)
 [![Badge](https://img.shields.io/badge/Support-.NET_9-darkcyan?logo=dotnet)](https://dotnet.microsoft.com/zh-tw/download/dotnet/9.0)

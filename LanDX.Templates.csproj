@@ -9,7 +9,7 @@
     <Authors>LanDX</Authors>
     <Description>LanDX .NET project templates</Description>
     <PackageTags>landx dotnet project template</PackageTags>
-    <PackageProjectUrl>https://www.nuget.org/</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/johnny60904/landx-templates/</PackageProjectUrl>
 
     <!-- Keep package type as 'Template' to show the package as a template package on nuget.org and make your template available in dotnet new search.-->
     <PackageType>Template</PackageType>
@@ -19,7 +19,7 @@
     <ContentTargetFolders>content</ContentTargetFolders>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
     <NoDefaultExcludes>true</NoDefaultExcludes>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>README.NuGet.md</PackageReadmeFile>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -37,6 +37,10 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.NuGet.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>
