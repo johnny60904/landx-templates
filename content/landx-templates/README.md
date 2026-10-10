@@ -1,7 +1,7 @@
 # MyNamespace.MyProject
 
 [![Repository](https://img.shields.io/badge/GitHub-~~badgeRepoName~~-blue?logo=github)](https://github.com/~~userName~~/~~repoName~~)
-[![License](https://img.shields.io/badge/license-~~license~~-green)](https://choosealicense.com/)
+[![License](https://img.shields.io/badge/license-~~license~~-green)](https://spdx.org/licenses/)
 
 ---
 
@@ -102,6 +102,6 @@ If you want to contact me you can reach me at <your_email@address.com>.
 
 ## License
 
-This project is licensed under the ~~~license~~~.
+This project is licensed under the ~~license~~.
 
 See the LICENSE file for the full license text.
