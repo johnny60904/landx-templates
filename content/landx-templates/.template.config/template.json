@@ -1,0 +1,363 @@
+{
+    "$schema": "https://json.schemastore.org/template",
+    "author": "LanDX",
+    "classifications": [
+        "Library",
+        "C#",
+        "Solution"
+    ],
+    "identity": "LanDX.Templates",
+    "name": "LanDX Templates",
+    "shortName": "landx-templates",
+    "sourceName": "MyNamespace.MyProject",
+    "preferNameDirectory": true,
+    "tags": {
+        "language": "C#",
+        "type": "solution"
+    },
+    "symbols": {
+        "ProjectType": {
+            "type": "parameter",
+            "datatype": "choice",
+            "defaultValue": "classlib",
+            "description": "Main project type",
+            "choices": [
+                {
+                    "choice": "classlib",
+                    "description": "Class Library (recommended)"
+                },
+                {
+                    "choice": "class",
+                    "description": "Class Library alias"
+                },
+                {
+                    "choice": "lib",
+                    "description": "Class Library alias"
+                },
+                {
+                    "choice": "console",
+                    "description": "Console Application"
+                }
+            ]
+        },
+        "Simple": {
+            "type": "parameter",
+            "datatype": "bool",
+            "defaultValue": "false",
+            "description": "Generate only the main project"
+        },
+        "Benchmarks": {
+            "type": "parameter",
+            "datatype": "bool",
+            "defaultValue": "false",
+            "description": "Include BenchmarkDotNet project"
+        },
+        "Docs": {
+            "type": "parameter",
+            "datatype": "bool",
+            "defaultValue": "false",
+            "description": "Include documentation"
+        },
+        "GitHubActions": {
+            "type": "parameter",
+            "datatype": "bool",
+            "defaultValue": "false",
+            "description": "Include GitHub Actions workflow"
+        },
+        "SdkVersion": {
+            "type": "parameter",
+            "datatype": "text",
+            "defaultValue": "",
+            "description": "Optional .NET SDK version for global.json"
+        },
+        "NormalizedSdkVersion": {
+            "type": "generated",
+            "generator": "regex",
+            "parameters": {
+                "source": "SdkVersion",
+                "steps": [
+                    {
+                        "regex": "^(latest|lts|10|10\\.0)$",
+                        "replacement": "10.0.401"
+                    },
+                    {
+                        "regex": "^(8|8\\.0)$",
+                        "replacement": "8.0.425"
+                    },
+                    {
+                        "regex": "^(9|9\\.0)$",
+                        "replacement": "9.0.318"
+                    }
+                ]
+            }
+        },
+        "TargetFramework": {
+            "type": "parameter",
+            "datatype": "choice",
+            "defaultValue": "net10.0",
+            "description": "Target framework",
+            "choices": [
+                {
+                    "choice": "net8.0",
+                    "description": ".NET 8 (recommended)"
+                },
+                {
+                    "choice": "net8",
+                    "description": ".NET 8 alias"
+                },
+                {
+                    "choice": "8",
+                    "description": ".NET 8 alias"
+                },
+                {
+                    "choice": "8.0",
+                    "description": ".NET 8 alias"
+                },
+                {
+                    "choice": "net9.0",
+                    "description": ".NET 9 (recommended)"
+                },
+                {
+                    "choice": "net9",
+                    "description": ".NET 9 alias"
+                },
+                {
+                    "choice": "9",
+                    "description": ".NET 9 alias"
+                },
+                {
+                    "choice": "9.0",
+                    "description": ".NET 9 alias"
+                },
+                {
+                    "choice": "net10.0",
+                    "description": ".NET 10 (recommended)"
+                },
+                {
+                    "choice": "net10",
+                    "description": ".NET 10 alias"
+                },
+                {
+                    "choice": "10",
+                    "description": ".NET 10 alias"
+                },
+                {
+                    "choice": "10.0",
+                    "description": ".NET 10 alias"
+                }
+            ]
+        },
+        "NormalizedTargetFramework": {
+            "type": "generated",
+            "generator": "regex",
+            "parameters": {
+                "source": "TargetFramework",
+                "steps": [
+                    {
+                        "regex": "^(?:net)?([0-9]+)(?:\\.0)?$",
+                        "replacement": "net$1.0"
+                    }
+                ]
+            }
+        },
+        "Version": {
+            "type": "parameter",
+            "datatype": "text",
+            "defaultValue": "",
+            "description": "Unified .NET version (latest, ltst, 8, 9, 10)"
+        },
+        "VersionTargetFramework": {
+            "type": "generated",
+            "generator": "switch",
+            "parameters": {
+                "evaluator": "C++",
+                "datatype": "string",
+                "cases": [
+                    {
+                        "condition": "(Version == 'latest' || Version == 'lts' || Version == '10' || Version == '10.0')",
+                        "value": "net10.0"
+                    },
+                    {
+                        "condition": "(Version == '9' || Version == '9.0')",
+                        "value": "net9.0"
+                    },
+                    {
+                        "condition": "(Version == '8' || Version == '8.0')",
+                        "value": "net8.0"
+                    }
+                ]
+            }
+        },
+        "VersionSdkVersion": {
+            "type": "generated",
+            "generator": "switch",
+            "parameters": {
+                "evaluator": "C++",
+                "datatype": "string",
+                "cases": [
+                    {
+                        "condition": "(Version == 'latest' || Version == 'lts' || Version == '10' || Version == '10.0')",
+                        "value": "10.0.401"
+                    },
+                    {
+                        "condition": "(Version == '9' || Version == '9.0')",
+                        "value": "9.0.318"
+                    },
+                    {
+                        "condition": "(Version == '8' || Version == '8.0')",
+                        "value": "8.0.425"
+                    }
+                ]
+            }
+        },
+        "EffectiveTargetFramework": {
+            "type": "generated",
+            "generator": "coalesce",
+            "parameters": {
+                "sourceVariableName": "VersionTargetFramework",
+                "fallbackVariableName": "NormalizedTargetFramework"
+            },
+            "replaces": "__TargetFramework__"
+        },
+        "EffectiveSdkVersion": {
+            "type": "generated",
+            "generator": "coalesce",
+            "parameters": {
+                "sourceVariableName": "VersionSdkVersion",
+                "fallbackVariableName": "NormalizedSdkVersion"
+            },
+            "replaces": "__SdkVersion__"
+        },
+        "BuildConfig": {
+            "type": "parameter",
+            "datatype": "bool",
+            "defaultValue": "false",
+            "description": "Include shared MSBuild and NuGet configuration"
+        },
+        "Preset": {
+            "type": "parameter",
+            "datatype": "choice",
+            "defaultValue": "standard",
+            "description": "Feature preset",
+            "choices": [
+                {
+                    "choice": "standard"
+                },
+                {
+                    "choice": "full"
+                }
+            ]
+        }
+    },
+    "specialCustomOperations": {
+        "**/*.slnx": {
+            "operations": [
+                {
+                    "type": "conditional",
+                    "configuration": {
+                        "endif": ["#endif", "<!--#endif"],
+                        "actionableIf": ["<!--#if"],
+                        "actionableElse": ["#else", "<!--#else"],
+                        "actionableElseif": ["#elseif", "#elif", "<!--#elseif", "<!--#elif"],
+                        "trim": "true",
+                        "wholeLine": "true",
+                        "evaluator": "C++"
+                    }
+                }
+            ]
+        },
+        "**/*.md": {
+            "operations": [
+                {
+                    "type": "conditional",
+                    "configuration": {
+                        "endif": ["#endif", "<!--#endif"],
+                        "actionableIf": ["<!--#if"],
+                        "actionableElse": ["#else", "<!--#else"],
+                        "actionableElseif": ["#elseif", "#elif", "<!--#elseif", "<!--#elif"],
+                        "trim": "true",
+                        "wholeLine": "true",
+                        "evaluator": "C++"
+                    }
+                }
+            ]
+        },
+        "**/*.json": {
+            "operations": [
+                {
+                    "type": "conditional",
+                    "configuration": {
+                        "endif": ["#endif", "//#endif"],
+                        "actionableIf": ["//#if"],
+                        "actionableElse": ["#else", "//#else"],
+                        "actionableElseif": ["#elseif", "#elif", "//#elseif", "//#elif"],
+                        "trim": "true",
+                        "wholeLine": "true",
+                        "evaluator": "C++"
+                    }
+                }
+            ]
+        }
+    },
+    "sources": [
+        {
+            "source": "./",
+            "target": "./",
+            "exclude": [
+                ".template.config/**",
+                "src/**",
+                "tests/**",
+                "benchmarks/**",
+                "docs/**",
+                ".github/**",
+                "build-config/**",
+                "global/**",
+                "**/bin/**",
+                "**/obj/**",
+                "**/.vs/**"
+            ]
+        },
+        {
+            "source": "src/",
+            "target": "src/",
+            "modifiers": [
+                {
+                    "condition": "(ProjectType == 'classlib' || ProjectType == 'class' || ProjectType == 'lib')",
+                    "exclude": [
+                        "**/Program.cs"
+                    ]
+                }
+            ]
+        },
+        {
+            "source": "tests/",
+            "target": "tests/",
+            "condition": "(!Simple || Preset == 'full')"
+        },
+        {
+            "source": "benchmarks/",
+            "target": "benchmarks/",
+            "condition": "(Preset == 'full' || (!Simple && Benchmarks))"
+        },
+        {
+            "source": "docs/",
+            "target": "docs/",
+            "condition": "(Preset == 'full' || Docs)"
+        },
+        {
+            "source": ".github/",
+            "target": ".github/",
+            "condition": "(Preset == 'full' || GitHubActions)"
+        },
+        {
+            "source": "build-config/",
+            "target": "./",
+            "condition": "(Preset == 'full' || BuildConfig)"
+        },
+        {
+            "source": "global/",
+            "target": "./",
+            "condition": "(Preset == 'full' || Version != '' || SdkVersion != '')"
+        }
+    ]
+}

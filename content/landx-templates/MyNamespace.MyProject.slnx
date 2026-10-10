@@ -1,0 +1,24 @@
+<Solution>
+  <!--#if (Preset == 'full' || (!Simple && Benchmarks))-->
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/MyNamespace.MyProject.Benchmarks/MyNamespace.MyProject.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/MyNamespace.MyProject/MyNamespace.MyProject.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MyNamespace.MyProject.Tests/MyNamespace.MyProject.Tests.csproj" />
+  </Folder>
+  <!--#elseif (Preset == 'standard' && !Simple)-->
+  <Folder Name="/src/">
+    <Project Path="src/MyNamespace.MyProject/MyNamespace.MyProject.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MyNamespace.MyProject.Tests/MyNamespace.MyProject.Tests.csproj" />
+  </Folder>
+  <!--#else -->
+  <Folder Name="/src/">
+    <Project Path="src/MyNamespace.MyProject/MyNamespace.MyProject.csproj" />
+  </Folder>
+  <!--#endif -->
+</Solution>

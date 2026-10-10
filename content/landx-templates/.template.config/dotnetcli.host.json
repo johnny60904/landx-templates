@@ -1,0 +1,45 @@
+{
+    "$schema": "https://json.schemastore.org/dotnetcli.host",
+    "symbolInfo": {
+        "ProjectType": {
+            "longName": "project-type",
+            "shortName": "t"
+        },
+        "Simple": {
+            "longName": "simple",
+            "shortName": "smp"
+        },
+        "Benchmarks": {
+            "longName": "benchmarks",
+            "shortName": "bm"
+        },
+        "Docs": {
+            "longName": "docs",
+            "shortName": "dc"
+        },
+        "GitHubActions": {
+            "longName": "github-actions",
+            "shortName": "ga"
+        },
+        "SdkVersion": {
+            "longName": "sdk-version",
+            "shortName": "sdkv"
+        },
+        "TargetFramework": {
+            "longName": "target-framework",
+            "shortName": "tfm"
+        },
+        "Version": {
+            "longName": "version",
+            "shortName": "ver"
+        },
+        "BuildConfig": {
+            "longName": "build-config",
+            "shortName": "bc"
+        },
+        "Preset": {
+            "longName": "preset",
+            "shortName": "ps"
+        }
+    }
+}

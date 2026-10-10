@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>__TargetFramework__</TargetFramework>
+    <!--#if (!BuildConfig && Preset != 'full') -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!--#endif -->
+    <!--#if (ProjectType == 'console') -->
+    <OutputType>Exe</OutputType>
+    <!--#endif -->
+  </PropertyGroup>
+
+</Project>

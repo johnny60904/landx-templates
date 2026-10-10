@@ -1,0 +1,11 @@
+{
+  "sdk": {
+    //#if (Preset == 'full' && Version == '' && SdkVersion == '')
+    "version": "10.0.401",
+    //#else
+    "version": "__SdkVersion__",
+    //#endif
+    "rollForward": "latestFeature",
+    "allowPrerelease": false
+  }
+}

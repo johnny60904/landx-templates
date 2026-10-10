@@ -1,0 +1,10 @@
+<Project>
+  <!-- See https://aka.ms/dotnet/msbuild/customize for more details on customizing your build -->
+  <Target Name="ValidateTargetFramework" BeforeTargets="Build">
+<!--/-:msbuild-conditional:noEmit -->
+    <Error Text="[Build Error] TargetFramework must be 'net8.0', 'net9.0', or 'net10.0', but was: '$(TargetFramework)'."
+           Condition="'$(TargetFramework)' != 'net8.0' and '$(TargetFramework)' != 'net9.0' and '$(TargetFramework)' != 'net10.0'" />
+<!--/+:msbuild-conditional:noEmit -->
+    <Message Importance="high" Text="Validation for target framework." />
+  </Target>
+</Project>
