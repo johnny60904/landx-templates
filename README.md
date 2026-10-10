@@ -9,7 +9,7 @@
 [![Badge](https://img.shields.io/badge/Support-.NET_10-darkcyan?logo=dotnet)](https://dotnet.microsoft.com/zh-tw/download/dotnet/10.0)
 
 [![Repository](https://img.shields.io/badge/GitHub-landx--templates-blue?logo=github)](https://github.com/johnny60904/landx-templates)
-[![License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/license/mit)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://choosealicense.com/licenses/mit/)
 
 **LanDX.Templates**  is a customizable .NET CLI project template for creating modern C# Class Library and Console Application projects.
 
