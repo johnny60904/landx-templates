@@ -3,7 +3,7 @@
     "symbolInfo": {
         "ProjectType": {
             "longName": "project-type",
-            "shortName": "t"
+            "shortName": "pt"
         },
         "Simple": {
             "longName": "simple",
@@ -40,6 +40,18 @@
         "Preset": {
             "longName": "preset",
             "shortName": "ps"
+        },
+        "GitHubUser": {
+            "longName": "github-user",
+            "shortName": "usr"
+        },
+        "License": {
+            "longName": "license",
+            "shortName": "lcn"
+        },
+        "GitHubRepo": {
+            "longName": "github-repo",
+            "shortName": "repo"
         }
     }
 }

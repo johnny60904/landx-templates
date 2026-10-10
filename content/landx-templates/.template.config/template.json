@@ -247,6 +247,185 @@
                     "choice": "full"
                 }
             ]
+        },
+        "GitHubUser": {
+            "type": "parameter",
+            "datatype": "text",
+            "defaultValue": "username",
+            "description": "GitHub user name",
+            "replaces": "~~userName~~"
+        },
+        "License": {
+            "type": "parameter",
+            "datatype": "text",
+            "defaultValue": "MIT",
+            "description": "License for GitHub repository"
+        },
+        "NormalizedLicense": {
+            "type": "generated",
+            "generator": "regex",
+            "parameters": {
+                "source": "License",
+                "steps": [
+                    {
+                        "regex": "^[mM][iI][tT]$",
+                        "replacement": "MIT"
+                    },
+                    {
+                        "regex": "^[aA][pP][aA][cC][hH][eE](?:\\-)?2(?:\\.0)?$",
+                        "replacement": "Apache-2.0"
+                    },
+                    {
+                        "regex": "^[bB][sS][dD](?:\\-)?2(?:\\-)?[cC][lL][aA][uU][sS][eE]$",
+                        "replacement": "BSD-2-Clause"
+                    },
+                    {
+                        "regex": "^[bB][sS][dD](?:\\-)?3(?:\\-)?[cC][lL][aA][uU][sS][eE]$",
+                        "replacement": "BSD-3-Clause"
+                    },
+                    {
+                        "regex": "^[iI][sS][cC]$",
+                        "replacement": "ISC"
+                    },
+                    {
+                        "regex": "^[zZ][lL][iI][bB]$",
+                        "replacement": "Zlib"
+                    },
+                    {
+                        "regex": "^[gG][pP][lL](?:\\-)?2(?:\\.0)?$",
+                        "replacement": "GPL-2.0"
+                    },
+                    {
+                        "regex": "^[gG][pP][lL](?:\\-)?3(?:\\.0)?$",
+                        "replacement": "GPL-3.0"
+                    },
+                    {
+                        "regex": "^[aA][gG][pP][lL](?:\\-)?3(?:\\.0)?$",
+                        "replacement": "AGPL-3.0"
+                    },
+                    {
+                        "regex": "^[lL][gG][pP][lL](?:\\-)?2\\.1$",
+                        "replacement": "LGPL-2.1"
+                    },
+                    {
+                        "regex": "^[lL][gG][pP][lL](?:\\-)?3(?:\\.0)?$",
+                        "replacement": "LGPL-3.0"
+                    },
+                    {
+                        "regex": "^[mM][pP][lL](?:\\-)?2(?:\\.0)?$",
+                        "replacement": "MPL-2.0"
+                    },
+                    {
+                        "regex": "^[eE][pP][lL](?:\\-)?2(?:\\.0)?$",
+                        "replacement": "EPL-2.0"
+                    },
+                    {
+                        "regex": "^[eE][uU][pP][lL](?:\\-)?1\\.2$",
+                        "replacement": "EUPL-1.2"
+                    },
+                    {
+                        "regex": "^[cC][dD][dD][lL](?:\\-)?(?:1)?(?:\\.0)?$",
+                        "replacement": "CDDL-1.0"
+                    },
+                    {
+                        "regex": "^[sS][sS][pP][lL](?:\\-)?(?:1)?(?:\\.0)?$",
+                        "replacement": "SSPL-1.0"
+                    },
+                    {
+                        "regex": "^[bB][sS][lL](?:\\-)?(?:1)?(?:\\.0)?$",
+                        "replacement": "BSL-1.0"
+                    },
+                    {
+                        "regex": "^[bB][sS][lL](?:\\-)?1\\.1$",
+                        "replacement": "BSL-1.1"
+                    },
+                    {
+                        "regex": "^[eE][lL][aA][sS][tT][iI][cC](?:\\-)?2(?:\\.0)?$",
+                        "replacement": "Elastic-2.0"
+                    },
+                    {
+                        "regex": "^[pP][oO][lL][yY][fF][oO][rR][mM](?:\\-)?[sS][mM][aA][lL][lL](?:\\-)?[bB][uU][sS][iI][nN][eE][sS][sS](?:\\-)?1(?:\\.0)?(?:\\.0)?$",
+                        "replacement": "PolyForm-Small-Business-1.0.0"
+                    },
+                    {
+                        "regex": "^[pP][oO][lL][yY][fF][oO][rR][mM](?:\\-)?[nN][oO][nN][cC][oO][mM][mM][eE][rR][cC][iI][aA][lL](?:\\-)?1(?:\\.0)?(?:\\.0)?$",
+                        "replacement": "PolyForm-Noncommercial-1.0.0"
+                    },
+                    {
+                        "regex": "^[cC][cC]0$|^[cC][cC]0\\-1(?:\\.0)?$",
+                        "replacement": "CC0-1.0"
+                    },
+                    {
+                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?(?:4)?$",
+                        "replacement": "CC-BY-4.0"
+                    },
+                    {
+                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[sS][aA](?:\\-)?(?:4)?$",
+                        "replacement": "CC-BY-SA-4.0"
+                    },
+                    {
+                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?(?:4)?$",
+                        "replacement": "CC-BY-NC-4.0"
+                    },
+                    {
+                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][dD](?:\\-)?(?:4)?$",
+                        "replacement": "CC-BY-ND-4.0"
+                    },
+                    {
+                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?[sS][aA](?:\\-)?(?:4)?$",
+                        "replacement": "CC-BY-NC-SA-4.0"
+                    },
+                    {
+                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?[nN][dD](?:\\-)?(?:4)?$",
+                        "replacement": "CC-BY-NC-ND-4.0"
+                    },
+                    {
+                        "regex": "^[oO][fF][lL](?:\\-)?(?:1)?$",
+                        "replacement": "OFL-1.0"
+                    },
+                    {
+                        "regex": "^[oO][fF][lL](?:\\-)?1\\.1$",
+                        "replacement": "OFL-1.1"
+                    },
+                    {
+                        "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?1\\.2$",
+                        "replacement": "CERN-OHL-1.2"
+                    },
+                    {
+                        "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[pP](?:\\-)?(?:2)?(?:\\.0)?$",
+                        "replacement": "CERN-OHL-P-2.0"
+                    },
+                    {
+                        "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[wW](?:\\-)?(?:2)?(?:\\.0)?$",
+                        "replacement": "CERN-OHL-W-2.0"
+                    },
+                    {
+                        "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[sS](?:\\-)?(?:2)?(?:\\.0)?$",
+                        "replacement": "CERN-OHL-S-2.0"
+                    }
+                ]
+            },
+            "replaces": "~~license~~"
+        },
+        "GitHubRepo": {
+            "type": "parameter",
+            "datatype": "text",
+            "defaultValue": "my-project",
+            "description": "GitHub repository name",
+            "replaces": "~~repoName~~"
+        },
+        "NormalizedBadgeRepo": {
+            "type": "derived",
+            "valueSource": "GitHubRepo",
+            "valueTransform": "DoubleDashes",
+            "replaces": "~~badgeRepoName~~"
+        }
+    },
+    "forms": {
+        "DoubleDashes": {
+            "identifier": "replace",
+            "pattern": "-",
+            "replacement": "--"
         }
     },
     "specialCustomOperations": {
