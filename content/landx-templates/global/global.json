@@ -1,11 +1,16 @@
 {
   "sdk": {
     //#if (Preset == 'full' && Version == '' && SdkVersion == '')
-    "version": "10.0.401",
+    "version": "10.0.404",
     //#else
     "version": "__SdkVersion__",
     //#endif
     "rollForward": "latestFeature",
     "allowPrerelease": false
   }
+  //#if (Version == 'latest' || Version == 'sts' || Version == '11' || Version == '11.0' || VersionSdkVersion == '11.0.100' || NormalizedSdkVersion == '11.0.100')
+  , "test": {
+    "runner": "Microsoft.Testing.Platform"
+  }
+  //#endif
 }

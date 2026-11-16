@@ -1,542 +1,594 @@
 {
-    "$schema": "https://json.schemastore.org/template",
-    "author": "LanDX",
-    "classifications": [
-        "Library",
-        "C#",
-        "Solution"
-    ],
-    "identity": "LanDX.Templates",
-    "name": "LanDX Templates",
-    "shortName": "landx-templates",
-    "sourceName": "MyNamespace.MyProject",
-    "preferNameDirectory": true,
-    "tags": {
-        "language": "C#",
-        "type": "solution"
-    },
-    "symbols": {
-        "ProjectType": {
-            "type": "parameter",
-            "datatype": "choice",
-            "defaultValue": "classlib",
-            "description": "Main project type",
-            "choices": [
-                {
-                    "choice": "classlib",
-                    "description": "Class Library (recommended)"
-                },
-                {
-                    "choice": "class",
-                    "description": "Class Library alias"
-                },
-                {
-                    "choice": "lib",
-                    "description": "Class Library alias"
-                },
-                {
-                    "choice": "console",
-                    "description": "Console Application"
-                }
-            ]
+  "$schema": "https://json.schemastore.org/template",
+  "author": "LanDX",
+  "classifications": [
+    "Library",
+    "C#",
+    "Solution"
+  ],
+  "identity": "LanDX.Templates",
+  "name": "LanDX Templates",
+  "shortName": "landx-templates",
+  "sourceName": "MyNamespace.MyProject",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "symbols": {
+    "ProjectType": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "classlib",
+      "description": "Main project type",
+      "choices": [
+        {
+          "choice": "classlib",
+          "description": "Class Library (recommended)"
         },
-        "Simple": {
-            "type": "parameter",
-            "datatype": "bool",
-            "defaultValue": "false",
-            "description": "Generate only the main project"
+        {
+          "choice": "class",
+          "description": "Class Library alias"
         },
-        "Benchmarks": {
-            "type": "parameter",
-            "datatype": "bool",
-            "defaultValue": "false",
-            "description": "Include BenchmarkDotNet project"
+        {
+          "choice": "lib",
+          "description": "Class Library alias"
         },
-        "Docs": {
-            "type": "parameter",
-            "datatype": "bool",
-            "defaultValue": "false",
-            "description": "Include documentation"
-        },
-        "GitHubActions": {
-            "type": "parameter",
-            "datatype": "bool",
-            "defaultValue": "false",
-            "description": "Include GitHub Actions workflow"
-        },
-        "SdkVersion": {
-            "type": "parameter",
-            "datatype": "text",
-            "defaultValue": "",
-            "description": "Optional .NET SDK version for global.json"
-        },
-        "NormalizedSdkVersion": {
-            "type": "generated",
-            "generator": "regex",
-            "parameters": {
-                "source": "SdkVersion",
-                "steps": [
-                    {
-                        "regex": "^(latest|lts|10|10\\.0)$",
-                        "replacement": "10.0.401"
-                    },
-                    {
-                        "regex": "^(8|8\\.0)$",
-                        "replacement": "8.0.425"
-                    },
-                    {
-                        "regex": "^(9|9\\.0)$",
-                        "replacement": "9.0.318"
-                    }
-                ]
-            }
-        },
-        "TargetFramework": {
-            "type": "parameter",
-            "datatype": "choice",
-            "defaultValue": "net10.0",
-            "description": "Target framework",
-            "choices": [
-                {
-                    "choice": "net8.0",
-                    "description": ".NET 8 (recommended)"
-                },
-                {
-                    "choice": "net8",
-                    "description": ".NET 8 alias"
-                },
-                {
-                    "choice": "8",
-                    "description": ".NET 8 alias"
-                },
-                {
-                    "choice": "8.0",
-                    "description": ".NET 8 alias"
-                },
-                {
-                    "choice": "net9.0",
-                    "description": ".NET 9 (recommended)"
-                },
-                {
-                    "choice": "net9",
-                    "description": ".NET 9 alias"
-                },
-                {
-                    "choice": "9",
-                    "description": ".NET 9 alias"
-                },
-                {
-                    "choice": "9.0",
-                    "description": ".NET 9 alias"
-                },
-                {
-                    "choice": "net10.0",
-                    "description": ".NET 10 (recommended)"
-                },
-                {
-                    "choice": "net10",
-                    "description": ".NET 10 alias"
-                },
-                {
-                    "choice": "10",
-                    "description": ".NET 10 alias"
-                },
-                {
-                    "choice": "10.0",
-                    "description": ".NET 10 alias"
-                }
-            ]
-        },
-        "NormalizedTargetFramework": {
-            "type": "generated",
-            "generator": "regex",
-            "parameters": {
-                "source": "TargetFramework",
-                "steps": [
-                    {
-                        "regex": "^(?:net)?([0-9]+)(?:\\.0)?$",
-                        "replacement": "net$1.0"
-                    }
-                ]
-            }
-        },
-        "Version": {
-            "type": "parameter",
-            "datatype": "text",
-            "defaultValue": "",
-            "description": "Unified .NET version (latest, ltst, 8, 9, 10)"
-        },
-        "VersionTargetFramework": {
-            "type": "generated",
-            "generator": "switch",
-            "parameters": {
-                "evaluator": "C++",
-                "datatype": "string",
-                "cases": [
-                    {
-                        "condition": "(Version == 'latest' || Version == 'lts' || Version == '10' || Version == '10.0')",
-                        "value": "net10.0"
-                    },
-                    {
-                        "condition": "(Version == '9' || Version == '9.0')",
-                        "value": "net9.0"
-                    },
-                    {
-                        "condition": "(Version == '8' || Version == '8.0')",
-                        "value": "net8.0"
-                    }
-                ]
-            }
-        },
-        "VersionSdkVersion": {
-            "type": "generated",
-            "generator": "switch",
-            "parameters": {
-                "evaluator": "C++",
-                "datatype": "string",
-                "cases": [
-                    {
-                        "condition": "(Version == 'latest' || Version == 'lts' || Version == '10' || Version == '10.0')",
-                        "value": "10.0.401"
-                    },
-                    {
-                        "condition": "(Version == '9' || Version == '9.0')",
-                        "value": "9.0.318"
-                    },
-                    {
-                        "condition": "(Version == '8' || Version == '8.0')",
-                        "value": "8.0.425"
-                    }
-                ]
-            }
-        },
-        "EffectiveTargetFramework": {
-            "type": "generated",
-            "generator": "coalesce",
-            "parameters": {
-                "sourceVariableName": "VersionTargetFramework",
-                "fallbackVariableName": "NormalizedTargetFramework"
-            },
-            "replaces": "__TargetFramework__"
-        },
-        "EffectiveSdkVersion": {
-            "type": "generated",
-            "generator": "coalesce",
-            "parameters": {
-                "sourceVariableName": "VersionSdkVersion",
-                "fallbackVariableName": "NormalizedSdkVersion"
-            },
-            "replaces": "__SdkVersion__"
-        },
-        "BuildConfig": {
-            "type": "parameter",
-            "datatype": "bool",
-            "defaultValue": "false",
-            "description": "Include shared MSBuild and NuGet configuration"
-        },
-        "Preset": {
-            "type": "parameter",
-            "datatype": "choice",
-            "defaultValue": "standard",
-            "description": "Feature preset",
-            "choices": [
-                {
-                    "choice": "standard"
-                },
-                {
-                    "choice": "full"
-                }
-            ]
-        },
-        "GitHubUser": {
-            "type": "parameter",
-            "datatype": "text",
-            "defaultValue": "username",
-            "description": "GitHub user name",
-            "replaces": "~~userName~~"
-        },
-        "License": {
-            "type": "parameter",
-            "datatype": "text",
-            "defaultValue": "MIT",
-            "description": "License for GitHub repository"
-        },
-        "NormalizedLicense": {
-            "type": "generated",
-            "generator": "regex",
-            "parameters": {
-                "source": "License",
-                "steps": [
-                    {
-                        "regex": "^[mM][iI][tT]$",
-                        "replacement": "MIT"
-                    },
-                    {
-                        "regex": "^[aA][pP][aA][cC][hH][eE](?:\\-)?2(?:\\.0)?$",
-                        "replacement": "Apache-2.0"
-                    },
-                    {
-                        "regex": "^[bB][sS][dD](?:\\-)?2(?:\\-)?[cC][lL][aA][uU][sS][eE]$",
-                        "replacement": "BSD-2-Clause"
-                    },
-                    {
-                        "regex": "^[bB][sS][dD](?:\\-)?3(?:\\-)?[cC][lL][aA][uU][sS][eE]$",
-                        "replacement": "BSD-3-Clause"
-                    },
-                    {
-                        "regex": "^[iI][sS][cC]$",
-                        "replacement": "ISC"
-                    },
-                    {
-                        "regex": "^[zZ][lL][iI][bB]$",
-                        "replacement": "Zlib"
-                    },
-                    {
-                        "regex": "^[gG][pP][lL](?:\\-)?2(?:\\.0)?$",
-                        "replacement": "GPL-2.0"
-                    },
-                    {
-                        "regex": "^[gG][pP][lL](?:\\-)?3(?:\\.0)?$",
-                        "replacement": "GPL-3.0"
-                    },
-                    {
-                        "regex": "^[aA][gG][pP][lL](?:\\-)?3(?:\\.0)?$",
-                        "replacement": "AGPL-3.0"
-                    },
-                    {
-                        "regex": "^[lL][gG][pP][lL](?:\\-)?2\\.1$",
-                        "replacement": "LGPL-2.1"
-                    },
-                    {
-                        "regex": "^[lL][gG][pP][lL](?:\\-)?3(?:\\.0)?$",
-                        "replacement": "LGPL-3.0"
-                    },
-                    {
-                        "regex": "^[mM][pP][lL](?:\\-)?2(?:\\.0)?$",
-                        "replacement": "MPL-2.0"
-                    },
-                    {
-                        "regex": "^[eE][pP][lL](?:\\-)?2(?:\\.0)?$",
-                        "replacement": "EPL-2.0"
-                    },
-                    {
-                        "regex": "^[eE][uU][pP][lL](?:\\-)?1\\.2$",
-                        "replacement": "EUPL-1.2"
-                    },
-                    {
-                        "regex": "^[cC][dD][dD][lL](?:\\-)?(?:1)?(?:\\.0)?$",
-                        "replacement": "CDDL-1.0"
-                    },
-                    {
-                        "regex": "^[sS][sS][pP][lL](?:\\-)?(?:1)?(?:\\.0)?$",
-                        "replacement": "SSPL-1.0"
-                    },
-                    {
-                        "regex": "^[bB][sS][lL](?:\\-)?(?:1)?(?:\\.0)?$",
-                        "replacement": "BSL-1.0"
-                    },
-                    {
-                        "regex": "^[bB][sS][lL](?:\\-)?1\\.1$",
-                        "replacement": "BSL-1.1"
-                    },
-                    {
-                        "regex": "^[eE][lL][aA][sS][tT][iI][cC](?:\\-)?2(?:\\.0)?$",
-                        "replacement": "Elastic-2.0"
-                    },
-                    {
-                        "regex": "^[pP][oO][lL][yY][fF][oO][rR][mM](?:\\-)?[sS][mM][aA][lL][lL](?:\\-)?[bB][uU][sS][iI][nN][eE][sS][sS](?:\\-)?1(?:\\.0)?(?:\\.0)?$",
-                        "replacement": "PolyForm-Small-Business-1.0.0"
-                    },
-                    {
-                        "regex": "^[pP][oO][lL][yY][fF][oO][rR][mM](?:\\-)?[nN][oO][nN][cC][oO][mM][mM][eE][rR][cC][iI][aA][lL](?:\\-)?1(?:\\.0)?(?:\\.0)?$",
-                        "replacement": "PolyForm-Noncommercial-1.0.0"
-                    },
-                    {
-                        "regex": "^[cC][cC]0$|^[cC][cC]0\\-1(?:\\.0)?$",
-                        "replacement": "CC0-1.0"
-                    },
-                    {
-                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?(?:4)?$",
-                        "replacement": "CC-BY-4.0"
-                    },
-                    {
-                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[sS][aA](?:\\-)?(?:4)?$",
-                        "replacement": "CC-BY-SA-4.0"
-                    },
-                    {
-                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?(?:4)?$",
-                        "replacement": "CC-BY-NC-4.0"
-                    },
-                    {
-                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][dD](?:\\-)?(?:4)?$",
-                        "replacement": "CC-BY-ND-4.0"
-                    },
-                    {
-                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?[sS][aA](?:\\-)?(?:4)?$",
-                        "replacement": "CC-BY-NC-SA-4.0"
-                    },
-                    {
-                        "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?[nN][dD](?:\\-)?(?:4)?$",
-                        "replacement": "CC-BY-NC-ND-4.0"
-                    },
-                    {
-                        "regex": "^[oO][fF][lL](?:\\-)?(?:1)?$",
-                        "replacement": "OFL-1.0"
-                    },
-                    {
-                        "regex": "^[oO][fF][lL](?:\\-)?1\\.1$",
-                        "replacement": "OFL-1.1"
-                    },
-                    {
-                        "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?1\\.2$",
-                        "replacement": "CERN-OHL-1.2"
-                    },
-                    {
-                        "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[pP](?:\\-)?(?:2)?(?:\\.0)?$",
-                        "replacement": "CERN-OHL-P-2.0"
-                    },
-                    {
-                        "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[wW](?:\\-)?(?:2)?(?:\\.0)?$",
-                        "replacement": "CERN-OHL-W-2.0"
-                    },
-                    {
-                        "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[sS](?:\\-)?(?:2)?(?:\\.0)?$",
-                        "replacement": "CERN-OHL-S-2.0"
-                    }
-                ]
-            },
-            "replaces": "~~license~~"
-        },
-        "GitHubRepo": {
-            "type": "parameter",
-            "datatype": "text",
-            "defaultValue": "my-project",
-            "description": "GitHub repository name",
-            "replaces": "~~repoName~~"
-        },
-        "NormalizedBadgeRepo": {
-            "type": "derived",
-            "valueSource": "GitHubRepo",
-            "valueTransform": "DoubleDashes",
-            "replaces": "~~badgeRepoName~~"
+        {
+          "choice": "console",
+          "description": "Console Application"
         }
+      ]
     },
-    "forms": {
-        "DoubleDashes": {
-            "identifier": "replace",
-            "pattern": "-",
-            "replacement": "--"
-        }
+    "Simple": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Generate only the main project"
     },
-    "specialCustomOperations": {
-        "**/*.slnx": {
-            "operations": [
-                {
-                    "type": "conditional",
-                    "configuration": {
-                        "endif": ["#endif", "<!--#endif"],
-                        "actionableIf": ["<!--#if"],
-                        "actionableElse": ["#else", "<!--#else"],
-                        "actionableElseif": ["#elseif", "#elif", "<!--#elseif", "<!--#elif"],
-                        "trim": "true",
-                        "wholeLine": "true",
-                        "evaluator": "C++"
-                    }
-                }
-            ]
-        },
-        "**/*.md": {
-            "operations": [
-                {
-                    "type": "conditional",
-                    "configuration": {
-                        "endif": ["#endif", "<!--#endif"],
-                        "actionableIf": ["<!--#if"],
-                        "actionableElse": ["#else", "<!--#else"],
-                        "actionableElseif": ["#elseif", "#elif", "<!--#elseif", "<!--#elif"],
-                        "trim": "true",
-                        "wholeLine": "true",
-                        "evaluator": "C++"
-                    }
-                }
-            ]
-        },
-        "**/*.json": {
-            "operations": [
-                {
-                    "type": "conditional",
-                    "configuration": {
-                        "endif": ["#endif", "//#endif"],
-                        "actionableIf": ["//#if"],
-                        "actionableElse": ["#else", "//#else"],
-                        "actionableElseif": ["#elseif", "#elif", "//#elseif", "//#elif"],
-                        "trim": "true",
-                        "wholeLine": "true",
-                        "evaluator": "C++"
-                    }
-                }
-            ]
-        }
+    "Benchmarks": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Include BenchmarkDotNet project"
     },
-    "sources": [
+    "Docs": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Include documentation"
+    },
+    "GitHubActions": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Include GitHub Actions workflow"
+    },
+    "SdkVersion": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "",
+      "description": "Optional .NET SDK version for global.json"
+    },
+    "NormalizedSdkVersion": {
+      "type": "generated",
+      "generator": "regex",
+      "parameters": {
+        "source": "SdkVersion",
+        "steps": [
+          {
+            "regex": "^(latest|sts|11|11\\.0)$",
+            "replacement": "11.0.100"
+          },
+          {
+            "regex": "^(lts|10|10\\.0)$",
+            "replacement": "10.0.404"
+          },
+          {
+            "regex": "^(8|8\\.0)$",
+            "replacement": "8.0.428"
+          },
+          {
+            "regex": "^(9|9\\.0)$",
+            "replacement": "9.0.321"
+          }
+        ]
+      }
+    },
+    "TargetFramework": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "net10.0",
+      "description": "Target framework",
+      "choices": [
         {
-            "source": "./",
-            "target": "./",
-            "exclude": [
-                ".template.config/**",
-                "src/**",
-                "tests/**",
-                "benchmarks/**",
-                "docs/**",
-                ".github/**",
-                "build-config/**",
-                "global/**",
-                "**/bin/**",
-                "**/obj/**",
-                "**/.vs/**"
-            ]
+          "choice": "net8.0",
+          "description": ".NET 8 (recommended)"
         },
         {
-            "source": "src/",
-            "target": "src/",
-            "modifiers": [
-                {
-                    "condition": "(ProjectType == 'classlib' || ProjectType == 'class' || ProjectType == 'lib')",
-                    "exclude": [
-                        "**/Program.cs"
-                    ]
-                }
-            ]
+          "choice": "net8",
+          "description": ".NET 8 alias"
         },
         {
-            "source": "tests/",
-            "target": "tests/",
-            "condition": "(!Simple || Preset == 'full')"
+          "choice": "8",
+          "description": ".NET 8 alias"
         },
         {
-            "source": "benchmarks/",
-            "target": "benchmarks/",
-            "condition": "(Preset == 'full' || (!Simple && Benchmarks))"
+          "choice": "8.0",
+          "description": ".NET 8 alias"
         },
         {
-            "source": "docs/",
-            "target": "docs/",
-            "condition": "(Preset == 'full' || Docs)"
+          "choice": "net9.0",
+          "description": ".NET 9 (recommended)"
         },
         {
-            "source": ".github/",
-            "target": ".github/",
-            "condition": "(Preset == 'full' || GitHubActions)"
+          "choice": "net9",
+          "description": ".NET 9 alias"
         },
         {
-            "source": "build-config/",
-            "target": "./",
-            "condition": "(Preset == 'full' || BuildConfig)"
+          "choice": "9",
+          "description": ".NET 9 alias"
         },
         {
-            "source": "global/",
-            "target": "./",
-            "condition": "(Preset == 'full' || Version != '' || SdkVersion != '')"
+          "choice": "9.0",
+          "description": ".NET 9 alias"
+        },
+        {
+          "choice": "net10.0",
+          "description": ".NET 10 (recommended)"
+        },
+        {
+          "choice": "net10",
+          "description": ".NET 10 alias"
+        },
+        {
+          "choice": "10",
+          "description": ".NET 10 alias"
+        },
+        {
+          "choice": "10.0",
+          "description": ".NET 10 alias"
+        },
+        {
+          "choice": "lts",
+          "description": ".NET 10 alias"
+        },
+        {
+          "choice": "net11.0",
+          "description": ".NET 11 (recommended)"
+        },
+        {
+          "choice": "net11",
+          "description": ".NET 11 alias"
+        },
+        {
+          "choice": "11",
+          "description": ".NET 11 alias"
+        },
+        {
+          "choice": "11.0",
+          "description": ".NET 11 alias"
+        },
+        {
+          "choice": "sts",
+          "description": ".NET 11 alias"
+        },
+        {
+          "choice": "latest",
+          "description": ".NET 11 alias"
         }
-    ]
+      ]
+    },
+    "NormalizedTargetFramework": {
+      "type": "generated",
+      "generator": "regex",
+      "parameters": {
+        "source": "TargetFramework",
+        "steps": [
+          {
+            "regex": "^(net11\\.0|net11|latest|sts|11|11\\.0)$",
+            "replacement": "net11.0"
+          },
+          {
+            "regex": "^(net10\\.0|net10|lts|10|10\\.0)$",
+            "replacement": "net10.0"
+          },
+          {
+            "regex": "^(net8\\.0|net8|8|8\\.0)$",
+            "replacement": "net9.0"
+          },
+          {
+            "regex": "^(net9\\.0|net9|9|9\\.0)$",
+            "replacement": "net8.0"
+          }
+        ]
+      }
+    },
+    "Version": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "",
+      "description": "Unified .NET version (latest, lts, sts, 8, 9, 10, 11)"
+    },
+    "VersionTargetFramework": {
+      "type": "generated",
+      "generator": "switch",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(Version == 'latest' || Version == 'sts' || Version == '11' || Version == '11.0')",
+            "value": "net11.0"
+          },
+          {
+            "condition": "(Version == 'lts' || Version == '10' || Version == '10.0')",
+            "value": "net10.0"
+          },
+          {
+            "condition": "(Version == '9' || Version == '9.0')",
+            "value": "net9.0"
+          },
+          {
+            "condition": "(Version == '8' || Version == '8.0')",
+            "value": "net8.0"
+          }
+        ]
+      }
+    },
+    "VersionSdkVersion": {
+      "type": "generated",
+      "generator": "switch",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(Version == 'latest' || Version == 'sts' || Version == '11' || Version == '11.0')",
+            "value": "11.0.100"
+          },
+          {
+            "condition": "(Version == 'lts' || Version == '10' || Version == '10.0')",
+            "value": "10.0.404"
+          },
+          {
+            "condition": "(Version == '9' || Version == '9.0')",
+            "value": "9.0.321"
+          },
+          {
+            "condition": "(Version == '8' || Version == '8.0')",
+            "value": "8.0.428"
+          }
+        ]
+      }
+    },
+    "EffectiveTargetFramework": {
+      "type": "generated",
+      "generator": "coalesce",
+      "parameters": {
+        "sourceVariableName": "VersionTargetFramework",
+        "fallbackVariableName": "NormalizedTargetFramework"
+      },
+      "replaces": "__TargetFramework__"
+    },
+    "EffectiveSdkVersion": {
+      "type": "generated",
+      "generator": "coalesce",
+      "parameters": {
+        "sourceVariableName": "VersionSdkVersion",
+        "fallbackVariableName": "NormalizedSdkVersion"
+      },
+      "replaces": "__SdkVersion__"
+    },
+    "BuildConfig": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Include shared MSBuild and NuGet configuration"
+    },
+    "Preset": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "standard",
+      "description": "Feature preset",
+      "choices": [
+        {
+          "choice": "standard"
+        },
+        {
+          "choice": "full"
+        }
+      ]
+    },
+    "GitHubUser": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "username",
+      "description": "GitHub user name",
+      "replaces": "~~userName~~"
+    },
+    "License": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "MIT",
+      "description": "License for GitHub repository"
+    },
+    "NormalizedLicense": {
+      "type": "generated",
+      "generator": "regex",
+      "parameters": {
+        "source": "License",
+        "steps": [
+          {
+            "regex": "^[mM][iI][tT]$",
+            "replacement": "MIT"
+          },
+          {
+            "regex": "^[aA][pP][aA][cC][hH][eE](?:\\-)?2(?:\\.0)?$",
+            "replacement": "Apache-2.0"
+          },
+          {
+            "regex": "^[bB][sS][dD](?:\\-)?2(?:\\-)?[cC][lL][aA][uU][sS][eE]$",
+            "replacement": "BSD-2-Clause"
+          },
+          {
+            "regex": "^[bB][sS][dD](?:\\-)?3(?:\\-)?[cC][lL][aA][uU][sS][eE]$",
+            "replacement": "BSD-3-Clause"
+          },
+          {
+            "regex": "^[iI][sS][cC]$",
+            "replacement": "ISC"
+          },
+          {
+            "regex": "^[zZ][lL][iI][bB]$",
+            "replacement": "Zlib"
+          },
+          {
+            "regex": "^[gG][pP][lL](?:\\-)?2(?:\\.0)?$",
+            "replacement": "GPL-2.0"
+          },
+          {
+            "regex": "^[gG][pP][lL](?:\\-)?3(?:\\.0)?$",
+            "replacement": "GPL-3.0"
+          },
+          {
+            "regex": "^[aA][gG][pP][lL](?:\\-)?3(?:\\.0)?$",
+            "replacement": "AGPL-3.0"
+          },
+          {
+            "regex": "^[lL][gG][pP][lL](?:\\-)?2\\.1$",
+            "replacement": "LGPL-2.1"
+          },
+          {
+            "regex": "^[lL][gG][pP][lL](?:\\-)?3(?:\\.0)?$",
+            "replacement": "LGPL-3.0"
+          },
+          {
+            "regex": "^[mM][pP][lL](?:\\-)?2(?:\\.0)?$",
+            "replacement": "MPL-2.0"
+          },
+          {
+            "regex": "^[eE][pP][lL](?:\\-)?2(?:\\.0)?$",
+            "replacement": "EPL-2.0"
+          },
+          {
+            "regex": "^[eE][uU][pP][lL](?:\\-)?1\\.2$",
+            "replacement": "EUPL-1.2"
+          },
+          {
+            "regex": "^[cC][dD][dD][lL](?:\\-)?(?:1)?(?:\\.0)?$",
+            "replacement": "CDDL-1.0"
+          },
+          {
+            "regex": "^[sS][sS][pP][lL](?:\\-)?(?:1)?(?:\\.0)?$",
+            "replacement": "SSPL-1.0"
+          },
+          {
+            "regex": "^[bB][sS][lL](?:\\-)?(?:1)?(?:\\.0)?$",
+            "replacement": "BSL-1.0"
+          },
+          {
+            "regex": "^[bB][sS][lL](?:\\-)?1\\.1$",
+            "replacement": "BSL-1.1"
+          },
+          {
+            "regex": "^[eE][lL][aA][sS][tT][iI][cC](?:\\-)?2(?:\\.0)?$",
+            "replacement": "Elastic-2.0"
+          },
+          {
+            "regex": "^[pP][oO][lL][yY][fF][oO][rR][mM](?:\\-)?[sS][mM][aA][lL][lL](?:\\-)?[bB][uU][sS][iI][nN][eE][sS][sS](?:\\-)?1(?:\\.0)?(?:\\.0)?$",
+            "replacement": "PolyForm-Small-Business-1.0.0"
+          },
+          {
+            "regex": "^[pP][oO][lL][yY][fF][oO][rR][mM](?:\\-)?[nN][oO][nN][cC][oO][mM][mM][eE][rR][cC][iI][aA][lL](?:\\-)?1(?:\\.0)?(?:\\.0)?$",
+            "replacement": "PolyForm-Noncommercial-1.0.0"
+          },
+          {
+            "regex": "^[cC][cC]0$|^[cC][cC]0\\-1(?:\\.0)?$",
+            "replacement": "CC0-1.0"
+          },
+          {
+            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?(?:4)?$",
+            "replacement": "CC-BY-4.0"
+          },
+          {
+            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[sS][aA](?:\\-)?(?:4)?$",
+            "replacement": "CC-BY-SA-4.0"
+          },
+          {
+            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?(?:4)?$",
+            "replacement": "CC-BY-NC-4.0"
+          },
+          {
+            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][dD](?:\\-)?(?:4)?$",
+            "replacement": "CC-BY-ND-4.0"
+          },
+          {
+            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?[sS][aA](?:\\-)?(?:4)?$",
+            "replacement": "CC-BY-NC-SA-4.0"
+          },
+          {
+            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?[nN][dD](?:\\-)?(?:4)?$",
+            "replacement": "CC-BY-NC-ND-4.0"
+          },
+          {
+            "regex": "^[oO][fF][lL](?:\\-)?(?:1)?$",
+            "replacement": "OFL-1.0"
+          },
+          {
+            "regex": "^[oO][fF][lL](?:\\-)?1\\.1$",
+            "replacement": "OFL-1.1"
+          },
+          {
+            "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?1\\.2$",
+            "replacement": "CERN-OHL-1.2"
+          },
+          {
+            "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[pP](?:\\-)?(?:2)?(?:\\.0)?$",
+            "replacement": "CERN-OHL-P-2.0"
+          },
+          {
+            "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[wW](?:\\-)?(?:2)?(?:\\.0)?$",
+            "replacement": "CERN-OHL-W-2.0"
+          },
+          {
+            "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[sS](?:\\-)?(?:2)?(?:\\.0)?$",
+            "replacement": "CERN-OHL-S-2.0"
+          }
+        ]
+      },
+      "replaces": "~~license~~"
+    },
+    "GitHubRepo": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "my-project",
+      "description": "GitHub repository name",
+      "replaces": "~~repoName~~"
+    },
+    "NormalizedBadgeRepo": {
+      "type": "derived",
+      "valueSource": "GitHubRepo",
+      "valueTransform": "DoubleDashes",
+      "replaces": "~~badgeRepoName~~"
+    }
+  },
+  "forms": {
+    "DoubleDashes": {
+      "identifier": "replace",
+      "pattern": "-",
+      "replacement": "--"
+    }
+  },
+  "specialCustomOperations": {
+    "**/*.slnx": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "endif": [ "#endif", "<!--#endif" ],
+            "actionableIf": [ "<!--#if" ],
+            "actionableElse": [ "#else", "<!--#else" ],
+            "actionableElseif": [ "#elseif", "#elif", "<!--#elseif", "<!--#elif" ],
+            "trim": "true",
+            "wholeLine": "true",
+            "evaluator": "C++"
+          }
+        }
+      ]
+    },
+    "**/*.md": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "endif": [ "#endif", "<!--#endif" ],
+            "actionableIf": [ "<!--#if" ],
+            "actionableElse": [ "#else", "<!--#else" ],
+            "actionableElseif": [ "#elseif", "#elif", "<!--#elseif", "<!--#elif" ],
+            "trim": "true",
+            "wholeLine": "true",
+            "evaluator": "C++"
+          }
+        }
+      ]
+    },
+    "**/*.json": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "endif": [ "#endif", "//#endif" ],
+            "actionableIf": [ "//#if" ],
+            "actionableElse": [ "#else", "//#else" ],
+            "actionableElseif": [ "#elseif", "#elif", "//#elseif", "//#elif" ],
+            "trim": "true",
+            "wholeLine": "true",
+            "evaluator": "C++"
+          }
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "source": "./",
+      "target": "./",
+      "exclude": [
+        ".template.config/**",
+        "src/**",
+        "tests/**",
+        "benchmarks/**",
+        "docs/**",
+        ".github/**",
+        "build-config/**",
+        "global/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/.vs/**"
+      ]
+    },
+    {
+      "source": "src/",
+      "target": "src/",
+      "modifiers": [
+        {
+          "condition": "(ProjectType == 'classlib' || ProjectType == 'class' || ProjectType == 'lib')",
+          "exclude": [
+            "**/Program.cs"
+          ]
+        }
+      ]
+    },
+    {
+      "source": "tests/",
+      "target": "tests/",
+      "condition": "(!Simple || Preset == 'full')"
+    },
+    {
+      "source": "benchmarks/",
+      "target": "benchmarks/",
+      "condition": "(Preset == 'full' || (!Simple && Benchmarks))"
+    },
+    {
+      "source": "docs/",
+      "target": "docs/",
+      "condition": "(Preset == 'full' || Docs)"
+    },
+    {
+      "source": ".github/",
+      "target": ".github/",
+      "condition": "(Preset == 'full' || GitHubActions)"
+    },
+    {
+      "source": "build-config/",
+      "target": "./",
+      "condition": "(Preset == 'full' || BuildConfig)"
+    },
+    {
+      "source": "global/",
+      "target": "./",
+      "condition": "(Preset == 'full' || Version != '' || SdkVersion != '')"
+    }
+  ]
 }

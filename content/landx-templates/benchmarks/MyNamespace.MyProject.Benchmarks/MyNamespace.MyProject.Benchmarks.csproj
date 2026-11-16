@@ -20,6 +20,7 @@
     <!--#if (!BuildConfig && Preset != 'full') -->
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!--#endif -->
   </PropertyGroup>
 
