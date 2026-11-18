@@ -7,10 +7,9 @@
     //#endif
     "rollForward": "latestFeature",
     "allowPrerelease": false
-  }
-  //#if (Version == 'latest' || Version == 'sts' || Version == '11' || Version == '11.0' || VersionSdkVersion == '11.0.100' || NormalizedSdkVersion == '11.0.100')
-  , "test": {
+  //#if (EffectiveSdkVersion == '10.0.404' || EffectiveSdkVersion == '11.0.100' || EffectiveTargetFramework == 'net10.0' || EffectiveTargetFramework == 'net11.0')
+  }, "test": {
     "runner": "Microsoft.Testing.Platform"
-  }
   //#endif
+  }
 }

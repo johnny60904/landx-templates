@@ -41,13 +41,21 @@
             "longName": "preset",
             "shortName": "ps"
         },
-        "GitHubUser": {
-            "longName": "github-user",
-            "shortName": "usr"
+        "GitHubOwner": {
+            "longName": "github-owner",
+            "shortName": "owner"
         },
         "License": {
             "longName": "license",
             "shortName": "lcn"
+        },
+        "CopyrightYear": {
+            "longName": "copyright-year",
+            "shortName": "cyear"
+        },
+        "CopyrightOwner": {
+            "longName": "copyright-owner",
+            "shortName": "cowner"
         },
         "GitHubRepo": {
             "longName": "github-repo",

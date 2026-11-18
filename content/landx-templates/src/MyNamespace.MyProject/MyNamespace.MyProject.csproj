@@ -10,6 +10,7 @@
     <!--#if (ProjectType == 'console') -->
     <OutputType>Exe</OutputType>
     <!--#endif -->
+    <PackageLicenseExpression>~~license~~</PackageLicenseExpression>
   </PropertyGroup>
 
 </Project>

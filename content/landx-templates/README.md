@@ -1,7 +1,7 @@
 # MyNamespace.MyProject
 
-[![Repository](https://img.shields.io/badge/GitHub-~~badgeRepoName~~-blue?logo=github)](https://github.com/~~userName~~/~~repoName~~)
-[![License](https://img.shields.io/badge/license-~~license~~-green)](https://spdx.org/licenses/)
+[![Repository](https://img.shields.io/badge/GitHub-~~badgeRepoName~~-blue?logo=github)](https://github.com/~~ownerName~~/~~repoName~~)
+[![License](https://img.shields.io/badge/license-~~badgeLicense~~-green)](https://spdx.org/licenses/)
 
 ---
 
@@ -104,4 +104,10 @@ If you want to contact me you can reach me at <your_email@address.com>.
 
 This project is licensed under the ~~license~~.
 
+<!--#if (NormalizedLicense == 'LGPL-2.1-only')-->
+See the COPYING and COPYING.LESSER files for the full license text.
+<!--#elseif (NormalizedLicense == 'GPL-2.0-only' || NormalizedLicense == 'GPL-3.0-only' || NormalizedLicense == 'AGPL-3.0-only')-->
+See the COPYING file for the full license text.
+<!--#else -->
 See the LICENSE file for the full license text.
+<!--#endif -->

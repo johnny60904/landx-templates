@@ -103,7 +103,7 @@
       "choices": [
         {
           "choice": "net8.0",
-          "description": ".NET 8 (recommended)"
+          "description": ".NET 8 (out of support by Microsoft)"
         },
         {
           "choice": "net8",
@@ -119,7 +119,7 @@
         },
         {
           "choice": "net9.0",
-          "description": ".NET 9 (recommended)"
+          "description": ".NET 9 (out of support by Microsoft)"
         },
         {
           "choice": "net9",
@@ -195,11 +195,11 @@
           },
           {
             "regex": "^(net8\\.0|net8|8|8\\.0)$",
-            "replacement": "net9.0"
+            "replacement": "net8.0"
           },
           {
             "regex": "^(net9\\.0|net9|9|9\\.0)$",
-            "replacement": "net8.0"
+            "replacement": "net9.0"
           }
         ]
       }
@@ -300,18 +300,100 @@
         }
       ]
     },
-    "GitHubUser": {
+    "GitHubOwner": {
       "type": "parameter",
       "datatype": "text",
-      "defaultValue": "username",
-      "description": "GitHub user name",
-      "replaces": "~~userName~~"
+      "defaultValue": "ownername",
+      "description": "GitHub owner name",
+      "replaces": "~~ownerName~~"
     },
     "License": {
       "type": "parameter",
-      "datatype": "text",
+      "datatype": "choice",
       "defaultValue": "MIT",
-      "description": "License for GitHub repository"
+      "description": "License for GitHub repository",
+      "choices": [
+        {
+          "choice": "MIT",
+          "description": "MIT License"
+        },
+        {
+          "choice": "mit",
+          "description": "MIT License"
+        },
+        {
+          "choice": "ISC",
+          "description": "ISC License"
+        },
+        {
+          "choice": "isc",
+          "description": "ISC License"
+        },
+        {
+          "choice": "Apache-2.0",
+          "description": "Apache-2.0 License"
+        },
+        {
+          "choice": "apache-2.0",
+          "description": "Apache-2.0 License"
+        },
+        {
+          "choice": "MPL-2.0",
+          "description": "MPL-2.0 License"
+        },
+        {
+          "choice": "mpl-2.0",
+          "description": "MPL-2.0 License"
+        },
+        {
+          "choice": "BSD-2-Clause",
+          "description": "BSD-2-Clause License"
+        },
+        {
+          "choice": "bsd-2-clause",
+          "description": "BSD-2-Clause License"
+        },
+        {
+          "choice": "BSD-3-Clause",
+          "description": "BSD-3-Clause License"
+        },
+        {
+          "choice": "bsd-3-clause",
+          "description": "BSD-3-Clause License"
+        },
+        {
+          "choice": "GPL-2.0-only",
+          "description": "GPL-2.0-only License"
+        },
+        {
+          "choice": "gpl-2.0-only",
+          "description": "GPL-2.0-only License"
+        },
+        {
+          "choice": "GPL-3.0-only",
+          "description": "GPL-3.0-only License"
+        },
+        {
+          "choice": "gpl-3.0-only",
+          "description": "GPL-3.0-only License"
+        },
+        {
+          "choice": "AGPL-3.0-only",
+          "description": "AGPL-3.0-only License"
+        },
+        {
+          "choice": "agpl-3.0-only",
+          "description": "AGPL-3.0-only License"
+        },
+        {
+          "choice": "LGPL-2.1-only",
+          "description": "LGPL-2.1-only License"
+        },
+        {
+          "choice": "lgpl-2.1-only",
+          "description": "LGPL-2.1-only License"
+        }
+      ]
     },
     "NormalizedLicense": {
       "type": "generated",
@@ -320,144 +402,68 @@
         "source": "License",
         "steps": [
           {
-            "regex": "^[mM][iI][tT]$",
+            "regex": "(?i)^MIT$",
             "replacement": "MIT"
           },
           {
-            "regex": "^[aA][pP][aA][cC][hH][eE](?:\\-)?2(?:\\.0)?$",
+            "regex": "^(?i:Apache)\\-2\\.0$",
             "replacement": "Apache-2.0"
           },
           {
-            "regex": "^[bB][sS][dD](?:\\-)?2(?:\\-)?[cC][lL][aA][uU][sS][eE]$",
+            "regex": "^(?i:BSD)\\-2\\-(?:Clause)$",
             "replacement": "BSD-2-Clause"
           },
           {
-            "regex": "^[bB][sS][dD](?:\\-)?3(?:\\-)?[cC][lL][aA][uU][sS][eE]$",
+            "regex": "^(?i:BSD)\\-3\\-(?:Clause)$",
             "replacement": "BSD-3-Clause"
           },
           {
-            "regex": "^[iI][sS][cC]$",
+            "regex": "(?i)^ISC$",
             "replacement": "ISC"
           },
           {
-            "regex": "^[zZ][lL][iI][bB]$",
-            "replacement": "Zlib"
+            "regex": "^(?i:GPL)\\-2\\.0\\-(?:only)$",
+            "replacement": "GPL-2.0-only"
           },
           {
-            "regex": "^[gG][pP][lL](?:\\-)?2(?:\\.0)?$",
-            "replacement": "GPL-2.0"
+            "regex": "^(?i:GPL)\\-3\\.0\\-(?:only)$",
+            "replacement": "GPL-3.0-only"
           },
           {
-            "regex": "^[gG][pP][lL](?:\\-)?3(?:\\.0)?$",
-            "replacement": "GPL-3.0"
+            "regex": "^(?i:AGPL)\\-3\\.0\\-(?:only)$",
+            "replacement": "AGPL-3.0-only"
           },
           {
-            "regex": "^[aA][gG][pP][lL](?:\\-)?3(?:\\.0)?$",
-            "replacement": "AGPL-3.0"
+            "regex": "^(?i:LGPL)\\-2\\.1\\-(?:only)$",
+            "replacement": "LGPL-2.1-only"
           },
           {
-            "regex": "^[lL][gG][pP][lL](?:\\-)?2\\.1$",
-            "replacement": "LGPL-2.1"
-          },
-          {
-            "regex": "^[lL][gG][pP][lL](?:\\-)?3(?:\\.0)?$",
-            "replacement": "LGPL-3.0"
-          },
-          {
-            "regex": "^[mM][pP][lL](?:\\-)?2(?:\\.0)?$",
+            "regex": "^(?i:MPL)\\-2\\.0$",
             "replacement": "MPL-2.0"
-          },
-          {
-            "regex": "^[eE][pP][lL](?:\\-)?2(?:\\.0)?$",
-            "replacement": "EPL-2.0"
-          },
-          {
-            "regex": "^[eE][uU][pP][lL](?:\\-)?1\\.2$",
-            "replacement": "EUPL-1.2"
-          },
-          {
-            "regex": "^[cC][dD][dD][lL](?:\\-)?(?:1)?(?:\\.0)?$",
-            "replacement": "CDDL-1.0"
-          },
-          {
-            "regex": "^[sS][sS][pP][lL](?:\\-)?(?:1)?(?:\\.0)?$",
-            "replacement": "SSPL-1.0"
-          },
-          {
-            "regex": "^[bB][sS][lL](?:\\-)?(?:1)?(?:\\.0)?$",
-            "replacement": "BSL-1.0"
-          },
-          {
-            "regex": "^[bB][sS][lL](?:\\-)?1\\.1$",
-            "replacement": "BSL-1.1"
-          },
-          {
-            "regex": "^[eE][lL][aA][sS][tT][iI][cC](?:\\-)?2(?:\\.0)?$",
-            "replacement": "Elastic-2.0"
-          },
-          {
-            "regex": "^[pP][oO][lL][yY][fF][oO][rR][mM](?:\\-)?[sS][mM][aA][lL][lL](?:\\-)?[bB][uU][sS][iI][nN][eE][sS][sS](?:\\-)?1(?:\\.0)?(?:\\.0)?$",
-            "replacement": "PolyForm-Small-Business-1.0.0"
-          },
-          {
-            "regex": "^[pP][oO][lL][yY][fF][oO][rR][mM](?:\\-)?[nN][oO][nN][cC][oO][mM][mM][eE][rR][cC][iI][aA][lL](?:\\-)?1(?:\\.0)?(?:\\.0)?$",
-            "replacement": "PolyForm-Noncommercial-1.0.0"
-          },
-          {
-            "regex": "^[cC][cC]0$|^[cC][cC]0\\-1(?:\\.0)?$",
-            "replacement": "CC0-1.0"
-          },
-          {
-            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?(?:4)?$",
-            "replacement": "CC-BY-4.0"
-          },
-          {
-            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[sS][aA](?:\\-)?(?:4)?$",
-            "replacement": "CC-BY-SA-4.0"
-          },
-          {
-            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?(?:4)?$",
-            "replacement": "CC-BY-NC-4.0"
-          },
-          {
-            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][dD](?:\\-)?(?:4)?$",
-            "replacement": "CC-BY-ND-4.0"
-          },
-          {
-            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?[sS][aA](?:\\-)?(?:4)?$",
-            "replacement": "CC-BY-NC-SA-4.0"
-          },
-          {
-            "regex": "^[cC][cC](?:\\-)?[bB][yY](?:\\-)?[nN][cC](?:\\-)?[nN][dD](?:\\-)?(?:4)?$",
-            "replacement": "CC-BY-NC-ND-4.0"
-          },
-          {
-            "regex": "^[oO][fF][lL](?:\\-)?(?:1)?$",
-            "replacement": "OFL-1.0"
-          },
-          {
-            "regex": "^[oO][fF][lL](?:\\-)?1\\.1$",
-            "replacement": "OFL-1.1"
-          },
-          {
-            "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?1\\.2$",
-            "replacement": "CERN-OHL-1.2"
-          },
-          {
-            "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[pP](?:\\-)?(?:2)?(?:\\.0)?$",
-            "replacement": "CERN-OHL-P-2.0"
-          },
-          {
-            "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[wW](?:\\-)?(?:2)?(?:\\.0)?$",
-            "replacement": "CERN-OHL-W-2.0"
-          },
-          {
-            "regex": "^[cC][eE][rR][nN](?:\\-)?[oO][hH][lL](?:\\-)?[sS](?:\\-)?(?:2)?(?:\\.0)?$",
-            "replacement": "CERN-OHL-S-2.0"
           }
         ]
       },
       "replaces": "~~license~~"
+    },
+    "GitHubBadgeLicense": {
+      "type": "derived",
+      "valueSource": "NormalizedLicense",
+      "valueTransform": "DoubleDashes",
+      "replaces": "~~badgeLicense~~"
+    },
+    "CopyrightYear": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "<year>",
+      "description": "Copyright year displayed in license",
+      "replaces": "__CopyrightYear__"
+    },
+    "CopyrightOwner": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "<copyright owner>",
+      "description": "Copyright owner displayed in license",
+      "replaces": "__CopyrightOwner__"
     },
     "GitHubRepo": {
       "type": "parameter",
@@ -490,6 +496,22 @@
             "actionableIf": [ "<!--#if" ],
             "actionableElse": [ "#else", "<!--#else" ],
             "actionableElseif": [ "#elseif", "#elif", "<!--#elseif", "<!--#elif" ],
+            "trim": "true",
+            "wholeLine": "true",
+            "evaluator": "C++"
+          }
+        }
+      ]
+    },
+    "**/*.cs": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "endif": [ "#endif", "//#endif" ],
+            "actionableIf": [ "//#if" ],
+            "actionableElse": [ "#else", "//#else" ],
+            "actionableElseif": [ "#elseif", "#elif", "//#elseif", "//#elif" ],
             "trim": "true",
             "wholeLine": "true",
             "evaluator": "C++"
@@ -543,6 +565,7 @@
         ".github/**",
         "build-config/**",
         "global/**",
+        "licenses/**",
         "**/bin/**",
         "**/obj/**",
         "**/.vs/**"
@@ -589,6 +612,56 @@
       "source": "global/",
       "target": "./",
       "condition": "(Preset == 'full' || Version != '' || SdkVersion != '')"
+    },
+    {
+      "source": "licenses/MIT/",
+      "target": "./",
+      "condition": "(NormalizedLicense == 'MIT')"
+    },
+    {
+      "source": "licenses/Apache-2.0/",
+      "target": "./",
+      "condition": "(NormalizedLicense == 'Apache-2.0')"
+    },
+    {
+      "source": "licenses/BSD-2-Clause/",
+      "target": "./",
+      "condition": "(NormalizedLicense == 'BSD-2-Clause')"
+    },
+    {
+      "source": "licenses/BSD-3-Clause/",
+      "target": "./",
+      "condition": "(NormalizedLicense == 'BSD-3-Clause')"
+    },
+    {
+      "source": "licenses/ISC/",
+      "target": "./",
+      "condition": "(NormalizedLicense == 'ISC')"
+    },
+    {
+      "source": "licenses/GPL-2.0-only/",
+      "target": "./",
+      "condition": "(NormalizedLicense == 'GPL-2.0-only')"
+    },
+    {
+      "source": "licenses/GPL-3.0-only/",
+      "target": "./",
+      "condition": "(NormalizedLicense == 'GPL-3.0-only')"
+    },
+    {
+      "source": "licenses/LGPL-2.1-only/",
+      "target": "./",
+      "condition": "(NormalizedLicense == 'LGPL-2.1-only')"
+    },
+    {
+      "source": "licenses/MPL-2.0/",
+      "target": "./",
+      "condition": "(NormalizedLicense == 'MPL-2.0')"
+    },
+    {
+      "source": "licenses/AGPL-3.0-only/",
+      "target": "./",
+      "condition": "(NormalizedLicense == 'AGPL-3.0-only')"
     }
   ]
 }

@@ -4,9 +4,10 @@
 [![NuGet](https://img.shields.io/badge/Package-Template-green?logo=nuget)](https://www.nuget.org/packages/LanDX.Templates)
 [![NuGet](https://img.shields.io/nuget/v/LanDX.Templates?label=NuGet&logo=nuget&color=darkorange)](https://www.nuget.org/packages/LanDX.Templates/)
 
-[![Badge](https://img.shields.io/badge/Support-.NET_8-darkcyan?logo=dotnet)](https://dotnet.microsoft.com/zh-tw/download/dotnet/8.0)
-[![Badge](https://img.shields.io/badge/Support-.NET_9-darkcyan?logo=dotnet)](https://dotnet.microsoft.com/zh-tw/download/dotnet/9.0)
-[![Badge](https://img.shields.io/badge/Support-.NET_10-darkcyan?logo=dotnet)](https://dotnet.microsoft.com/zh-tw/download/dotnet/10.0)
+[![Target Framework](https://img.shields.io/badge/Target_Framework-.NET_8-darkcyan?logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![Target Framework](https://img.shields.io/badge/Target_Framework-.NET_9-darkcyan?logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/9.0)
+[![Target Framework](https://img.shields.io/badge/Target_Framework-.NET_10-darkcyan?logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/10.0)
+[![Target Framework](https://img.shields.io/badge/Target_Framework-.NET_11-darkcyan?logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/11.0)
 
 [![Repository](https://img.shields.io/badge/GitHub-landx--templates-blue?logo=github)](https://github.com/johnny60904/landx-templates)
 [![License](https://img.shields.io/badge/license-MIT-green)](https://choosealicense.com/licenses/mit/)
@@ -19,7 +20,7 @@ It provides a consistent project structure, configurable target frameworks, and 
 
 ## Features
 
-- **Modern .NET:** Supports .NET 8, .NET 9, and .NET 10 target frameworks.
+- **Modern .NET:** Supports .NET 8, .NET 9, .NET 10, and .NET 11 target frameworks.
 
 - **Multiple project types:** Generate Class Library or Console Application projects.
 
@@ -38,6 +39,46 @@ It provides a consistent project structure, configurable target frameworks, and 
 - **Optional shared build configuration:** Include centralized MSBuild and NuGet configuration with --build-config.
 
 - **Automated package publishing:** Publish versioned template packages through GitHub Actions and NuGet Trusted Publishing.
+
+---
+
+## .NET Version Support
+
+LanDX.Templates currently supports generating projects targeting multiple .NET versions. However, template compatibility does not imply that the corresponding .NET release is still supported by Microsoft.
+
+### Microsoft Support Lifecycle
+
+| .NET Version | Release Type | Microsoft Support Status |
+| ------------ | ------------ | ------------------------ |
+| .NET 8       | LTS          | End of Support           |
+| .NET 9       | STS          | End of Support           |
+| .NET 10      | LTS          | Supported                |
+| .NET 11      | STS          | Supported                |
+
+<br>
+
+> [!IMPORTANT]
+> **.NET 8 and .NET 9 reached End of Support on November 10, 2026.**
+> 
+> Microsoft no longer provides servicing updates, security fixed, or technical support for these releases.
+> 
+> LanDX.Templates currently retains the ability to generate .NET 8 and .NET 9 projects for compatibility purposes. However, these target frameworks are no longer recommended for new projects.
+
+### Target Framework Deprecation Policy
+
+Out-of-support target frameworks may remain available in the template for compatibility with existing development environments and projects.
+
+However, their availability is not guaranteed across future template releases. Deprecated target frameworks may eventually be removed as part of a major release, based on maintenance requirements, compatibility considerations, and project direction.
+
+For new projects, we recommend targeting a currently supported .NET release .NET 10 (LTS) is the recommended choice when a longer support lifecycle is preferred.
+
+For the latest release information and support dates, refer to Microsoft's official documentation:
+
+- [.NET and .NET Core Support Policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core)
+
+- [.NET Releases and Support](https://learn.microsoft.com/dotnet/core/releases-and-support)
+
+- [.NET Downloads](https://dotnet.microsoft.com/download/dotnet)
 
 ---
 
@@ -95,31 +136,31 @@ The template short name is **landx-templates**.
 
 Create a Class Library using the default configuration (`-n` is short name for `--name`):
 
-`dotnet new landx-templates -n <your-project-name>`
+`dotnet new landx-templates -n MyProject`
 
 <br>
 
 To generate a project in a specific directory, use `--output` / `-o` (short name):
 
-`dotnet new landx-templates -n <your-project-name> -o <path>`
+`dotnet new landx-templates -n MyProject -o <path>`
 
 <br>
 
 Create a minimal project:
 
-`dotnet new landx-templates -n <your-project-name> --simple`
+`dotnet new landx-templates -n MyProject --simple`
 
 <br>
 
 Create a Console Application:
 
-`dotnet new landx-templates -n <your-project-name> --project-type console`
+`dotnet new landx-templates -n MyProject --project-type console`
 
 <br>
 
 Create a project with the full preset:
 
-`dotnet new landx-templates -n <your-project-name> --preset full`
+`dotnet new landx-templates -n MyProject --preset full`
 
 <br>
 
@@ -148,7 +189,7 @@ The default project type is **classlib**.
 
 Example:
 
-`dotnet new landx-templates -n <your-project-name> --project-type console`
+`dotnet new landx-templates -n MyProject --project-type console`
 
 If `--project-type` is omitted, the template uses its configured default. The current default is intended to be a Class Library.
 
@@ -173,13 +214,13 @@ The default preset is **standard**.
 
 Create a standard project:
 
-`dotnet new landx-templates -n <your-project-name> --preset standard`
+`dotnet new landx-templates -n MyProject --preset standard`
 
 <br>
 
 Create a full project:
 
-`dotnet new landx-templates -n <your-project-name> --preset full`
+`dotnet new landx-templates -n MyProject --preset full`
 
 <br>
 
@@ -200,7 +241,7 @@ The exact SDK and target framework versions depend on the template's normalizati
 
 Use `--simple` / `-smp` (short name) to generate a minimal project structure.
 
-`dotnet new landx-templates -n <your-project-name> --simple`
+`dotnet new landx-templates -n MyProject --simple`
 
 The simple configuration includes the common project files and source project, without the test project or optional components.
 
@@ -235,7 +276,7 @@ The following switches enable additional files or directories.
 
 For example:
 
-`dotnet new landx-templates -n <your-project-name> --docs --github-actions --benchmarks --build-config`
+`dotnet new landx-templates -n MyProject --docs --github-actions --benchmarks --build-config`
 
 Optional components are excluded unless enabled by the selected preset or explicit options, subject to the precedence rules described in this document.
 
@@ -269,7 +310,7 @@ The template provides three parameters for selecting the SDK version and target 
 
 Use `--sdk-version` / `-sdkv` (short name) to configure the generated global.json.
 
-`dotnet new landx-templates -n <your-project-name> --sdk-version 10.0.107`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.107`
 
 <br>
 
@@ -279,15 +320,15 @@ The template normalizes supported inputs according to its configured rules. The 
 
 Examples:
 
-`dotnet new landx-templates -n <your-project-name> --sdk-version 8`
+`dotnet new landx-templates -n MyProject --sdk-version 8`
 
-`dotnet new landx-templates -n <your-project-name> --sdk-version 9.0`
+`dotnet new landx-templates -n MyProject --sdk-version 9.0`
 
-`dotnet new landx-templates -n <your-project-name> --sdk-version 9.0.318`
+`dotnet new landx-templates -n MyProject --sdk-version 9.0.321`
 
-`dotnet new landx-templates -n <your-project-name> --sdk-version lts`
+`dotnet new landx-templates -n MyProject --sdk-version lts`
 
-`dotnet new landx-templates -n <your-project-name> --sdk-version latest`
+`dotnet new landx-templates -n MyProject --sdk-version latest`
 
 ---
 
@@ -299,17 +340,18 @@ Use `--target-framework` / `-tfm` (short name) to select the target framework fo
 
 Supported inputs include:
 
-| Inputs                           | Target framework |
-|----------------------------------|------------------|
-| `net8.0`, `net8`, `8`, `8.0`     | `net8.0`         |
-| `net9.0`, `net9`, `9`, `9.0`     | `net9.0`         |
-| `net10.0`, `net10`, `10`, `10.0` | `net10.0`        |
+| Inputs                                            | Target framework |
+|---------------------------------------------------|------------------|
+| `net8.0`, `net8`, `8`, `8.0`                      | `net8.0`         |
+| `net9.0`, `net9`, `9`, `9.0`                      | `net9.0`         |
+| `net10.0`, `net10`, `10`, `10.0`, `lts`           | `net10.0`        |
+| `net11.0`, `net11`, `11`, `11.0`, `sts`, `latest` | `net11.0`        |
 
 <br>
 
 Example:
 
-`dotnet new landx-templates -n <your-project-name> --target-framework net8.0`
+`dotnet new landx-templates -n MyProject --target-framework net8.0`
 
 <br>
 
@@ -321,7 +363,7 @@ The normalized target framework is applied to the generated project .csproj file
 
 Use `--version` / `-ver` (short name) when you want to select the SDK and target framework together.
 
-`dotnet new landx-templates -n <your-project-name> --version 10`
+`dotnet new landx-templates -n MyProject --version 10`
 
 <br>
 
@@ -329,7 +371,7 @@ The result will be:
 
 **Target Framework:** net10.0
 
-**SDK Version**: 10.0.401
+**SDK Version**: 10.0.404
 
 <br>
 
@@ -352,7 +394,7 @@ If multiple version parameters are supplied, the template applies the following 
 
 For example:
 
-`dotnet new landx-templates -n <your-project-name> --preset full --version 9 --sdk-version lts --target-framework 8.0`
+`dotnet new landx-templates -n MyProject --preset full --version 9 --sdk-version lts --target-framework 8.0`
 
 <br>
 
@@ -370,7 +412,7 @@ The plain default invocation and the standard preset do not, by themselves, impl
 
 ### GitHub Metadata
 
-Use `--github-user` / `-usr` (short name) to configure the GitHub user or organization used by the generated README badge URL.
+Use `--github-owner` / `-owner` (short name) to configure the GitHub user or organization used by the generated README badge URL.
 
 Use `--github-repo` / `-repo` (short name) to configure the repository name used by the badge and repository hyperlink.
 
@@ -378,7 +420,7 @@ Use `--github-repo` / `-repo` (short name) to configure the repository name used
 
 Example:
 
-`dotnet new landx-templates -n <your-project-name> --github-user LanDX --github-repo MyProject`
+`dotnet new landx-templates -n MyProject --github-owner LanDX --github-repo MyProject`
 
 <br>
 
@@ -386,33 +428,118 @@ The template normalizes the repository name used in the badge URL by replacing h
 
 <br>
 
-Ensure that the supplied user and repository values correspond to the intended GitHub repository.
+Ensure that the supplied owner and repository values correspond to the intended GitHub repository.
 
 ---
 
 ### License
 
-Use `--license` / `-lcn` (short name) to configure the license identifier displayed in the generated README.
+Use `--license` / `-lcn` (short name) to select the license for the generated project.
+
+The default license is MIT.
+
+<br>
+
+### Supported Licenses
+
+LanDX.Templates currently supports generating projects with the following 10 open-source licenses:
+
+| SPDX License Identifier | License Name                                 | Generated File(s)               |
+| ----------------------- | -------------------------------------------- | ------------------------------- |
+| MIT                     | MIT License                                  | **LICENSE**                     |
+| ISC                     | ISC License                                  | **LICENSE**                     |
+| BSD-2-Clause            | BSD 2-Clause License                         | **LICENSE**                     |
+| BSD-3-Clause            | BSD 3-Clause License                         | **LICENSE**                     |
+| GPL-2.0-only            | GNU General Public License v2.0 only         | **COPYING**                     |
+| GPL-3.0-only            | GNU General Public License v3.0 only         | **COPYING**                     |
+| LGPL-2.1-only           | GNU Lesser General Public License v2.1 only  | **COPYING**, **COPYING.LESSER** |
+| AGPL-3.0-only           | GNU Affero General Public License v3.0 only  | **COPYING**                     |
+| MPL-2.0                 | Mozilla Public License 2.0                   | **LICENSE**                     |
+
+<br>
+
+### Usage
+
+Specify a license identifier when generating a project:
+
+```txt
+dotnet new landx-templates -n MyProject --license Apache-2.0
+```
+
+Additional examples:
+
+```txt
+dotnet new landx-templates -n MyProject --license MIT
+
+dotnet new landx-templates -n MyProject --license BSD-3-Clause
+
+dotnet new landx-templates -n MyProject --license GPL-3.0-only
+
+dotnet new landx-templates -n MyProject --license LGPL-2.1-only
+
+dotnet new landx-templates -n MyProject --license AGPL-3.0-only
+
+dotnet new landx-templates -n MyProject --license MPL-2.0
+```
+
+<br>
+
+### License File Generation
+
+The template automatically generates the license file(s) corresponding to the selected license.
+
+Depending on the selected license, the generated project includes:
+
+- LICENSE
+
+- COPYING
+
+- COPYING, COPYING.LESSER
+
+Only hte files required by the selected license are generated.
+
+The generated README also updates its ## License section and license badge to reflect the selected license identifier.
+
+<br>
+
+### Copyright Information
+
+Use the following parameters to customize copyright information in the generated license file(s):
+
+| Option              | Short Name | Description              |
+| ------------------- | ---------- | ------------------------ |
+| `--copyright-year`  | `-cyear`   | Sets the copyright year  |
+| `--copyright-owner` | `-cowner`  | Sets the copyright owner |
 
 <br>
 
 Example:
 
-`dotnet new landx-templates -n <your-project-name> --license MIT`
+```txt
+dotnet new landx-templates -n MyProject --license MIT --copyright-year 2026 --copyright-owner "John Doe"
+```
 
-<br>
+The default values are placeholders. Specify the appropriate copyright year and copyright owner/holder when generating your project, and review the generated license file(s) before distribution.
 
-The generated project includes the template's MIT license text with replaceable copyright information.
+**Important Notes**
 
-<br>
+- The default license is MIT when --license is omitted.
 
-**Note:** Changing the README license label does not, by itself, automatically replace the license text. Eensure that the identifier and the actual LICENSE file remain consistent.
+- Use one of the supported license identifier listed above.
+
+- The generated license file(s), README license section, and license badge are configured according to the selected license.
+
+- Selecting a license does not constitute legal advice. Review the applicable license terms before distributing your project.
+
+For official license identifiers and their definitions, see the SPDX License List.
+
+[&rarr; SPDX License List](https://spdx.org/licenses/)
 
 ---
 
 ## Generated Project Structure
 
-The default project structure includes the following files and directories:
+### Default Structure
 
 ```txt
 MyNamespace.MyProject/
@@ -420,32 +547,35 @@ MyNamespace.MyProject/
 │   └── MyNamespace.MyProject/
 │       ├── MyNamespace.MyProject.csproj
 │       ├── MyClass.cs
-│       └── Program.cs
-├── tests/                          # Standard preset
+│       └── Program.cs              # Console only
+├── tests/                          # Excluded by --simple
 │   └── MyNamespace.MyProject.Tests/
 │       ├── MyNamespace.MyProject.Tests.csproj
 │       └── UnitTest1.cs
 ├── .editorconfig
 ├── .gitattributes
 ├── .gitignore
-├── LICENSE
+├── LICENSE                         # Default MIT
 ├── MyNamespace.MyProject.slnx
 └── README.md
 ```
 
-<br>
+### Optional Structure
 
-Depending on the selected options, the generated project may also include:
-
-| Include                    | Option             |
-|----------------------------|--------------------|
-| `.github/`                 | `--github-actions` |
-| `benchmarks/`              | `--benchmarks`     |
-| `docs/`                    | `--docs`           |
-| `global.json`              | Version selection  |
-| `Directory.Build.props`    | `build-config`     |
-| `Directory.Build.targets`  | `build-config`     |
-| `Directory.Packages.props` | `build-config`     |
+```txt
+MyNamespace.MyProject/
+├── .github/                              # --github-actions
+│   └── workflows/
+│       └── workflow.yaml
+├── benchmarks/                           # --benchmarks
+│   └── MyNamespace.MyProject.Benchmarks/
+├── docs/                                 # --docs
+│   └── architecture-decision-records.md
+├── global.json                           # --version/--sdk-version
+├── Directory.Build.props                 # --build-config
+├── Directory.Build.targets               # --build-config
+└── Directory.Packages.props              # --build-config
+```
 
 <br>
 
@@ -459,31 +589,31 @@ The solution file is also configured to include the appropriate project folders 
 
 ### Minimal Class Library
 
-`dotnet new landx-templates -n <your-project-name> --simple --project-type classlib`
+`dotnet new landx-templates -n MyProject --simple --project-type classlib`
 
 <br>
 
 ### Standard Console Application
 
-`dotnet new landx-templates -n <your-project-name> --project-type console`
+`dotnet new landx-templates -n MyProject --project-type console`
 
 <br>
 
 ### Full Class Library Targeting .NET 10
 
-`dotnet new landx-templates -n <your-project-name> --preset full --project-type classlib --target-framework net10.0`
+`dotnet new landx-templates -n MyProject --preset full --project-type classlib --target-framework net10.0`
 
 <br>
 
 ### Custom SDK and Target Framework
 
-`dotnet new landx-templates -n <your-project-name> --sdk-version 10 --target-framework net9.0`
+`dotnet new landx-templates -n MyProject --sdk-version 10 --target-framework net9.0`
 
 <br>
 
 ### Explicit Shared Version
 
-`dotnet new landx-templates -n <your-project-name> --version 10`
+`dotnet new landx-templates -n MyProject --version 10`
 
 ---
 

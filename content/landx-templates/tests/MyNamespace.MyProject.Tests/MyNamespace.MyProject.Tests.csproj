@@ -9,7 +9,7 @@
     <!--#endif -->
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <!--#if (Version == 'latest' || Version == 'sts' || Version == '11' || Version == '11.0' || VersionSdkVersion == '11.0.100' || NormalizedSdkVersion == '11.0.100') -->
+    <!--#if (EffectiveSdkVersion == '10.0.404' || EffectiveSdkVersion == '11.0.100' || EffectiveTargetFramework == 'net10.0' || EffectiveTargetFramework == 'net11.0') -->
     <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
     <OutputType>Exe</OutputType>
     <!--#endif -->
@@ -17,7 +17,7 @@
 
   <!--#if (BuildConfig || Preset == 'full') -->
   <ItemGroup>
-    <!--#if (Version == 'latest' || Version == 'sts' || Version == '11' || Version == '11.0' || VersionSdkVersion == '11.0.100' || NormalizedSdkVersion == '11.0.100') -->
+    <!--#if (EffectiveSdkVersion == '10.0.404' || EffectiveSdkVersion == '11.0.100' || EffectiveTargetFramework == 'net10.0' || EffectiveTargetFramework == 'net11.0') -->
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage"/>
     <!--#else -->
     <PackageReference Include="coverlet.collector"/>
@@ -29,7 +29,7 @@
   </ItemGroup>
   <!--#else -->
   <ItemGroup>
-    <!--#if (Version == 'latest' || Version == 'sts' || Version == '11' || Version == '11.0' || VersionSdkVersion == '11.0.100' || NormalizedSdkVersion == '11.0.100') -->
+    <!--#if (EffectiveSdkVersion == '10.0.404' || EffectiveSdkVersion == '11.0.100' || EffectiveTargetFramework == 'net10.0' || EffectiveTargetFramework == 'net11.0') -->
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
     <!--#else -->
     <PackageReference Include="coverlet.collector" Version="10.1.1" />
