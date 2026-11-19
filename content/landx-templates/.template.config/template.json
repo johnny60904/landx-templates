@@ -11,6 +11,14 @@
   "shortName": "landx-templates",
   "sourceName": "MyNamespace.MyProject",
   "preferNameDirectory": true,
+  "guids": [
+    "827E0CD3-B72D-47B6-A68D-7590B98EB39B",
+    "11D4CD90-F4BF-4383-BFFF-3CA2901ED205",
+    "0AB3BF05-4346-4AA6-1389-037BE0695223",
+    "080E95A5-7A46-4E4C-992F-13DCD0F51C5C",
+    "66320409-64EC-F7C5-3DEF-65E7510DAAD1",
+    "A3852942-941B-436A-89DB-CE7C6BA9DCFB"
+  ],
   "tags": {
     "language": "C#",
     "type": "solution"
@@ -318,15 +326,7 @@
           "description": "MIT License"
         },
         {
-          "choice": "mit",
-          "description": "MIT License"
-        },
-        {
           "choice": "ISC",
-          "description": "ISC License"
-        },
-        {
-          "choice": "isc",
           "description": "ISC License"
         },
         {
@@ -334,15 +334,7 @@
           "description": "Apache-2.0 License"
         },
         {
-          "choice": "apache-2.0",
-          "description": "Apache-2.0 License"
-        },
-        {
           "choice": "MPL-2.0",
-          "description": "MPL-2.0 License"
-        },
-        {
-          "choice": "mpl-2.0",
           "description": "MPL-2.0 License"
         },
         {
@@ -350,15 +342,7 @@
           "description": "BSD-2-Clause License"
         },
         {
-          "choice": "bsd-2-clause",
-          "description": "BSD-2-Clause License"
-        },
-        {
           "choice": "BSD-3-Clause",
-          "description": "BSD-3-Clause License"
-        },
-        {
-          "choice": "bsd-3-clause",
           "description": "BSD-3-Clause License"
         },
         {
@@ -366,15 +350,7 @@
           "description": "GPL-2.0-only License"
         },
         {
-          "choice": "gpl-2.0-only",
-          "description": "GPL-2.0-only License"
-        },
-        {
           "choice": "GPL-3.0-only",
-          "description": "GPL-3.0-only License"
-        },
-        {
-          "choice": "gpl-3.0-only",
           "description": "GPL-3.0-only License"
         },
         {
@@ -382,15 +358,7 @@
           "description": "AGPL-3.0-only License"
         },
         {
-          "choice": "agpl-3.0-only",
-          "description": "AGPL-3.0-only License"
-        },
-        {
           "choice": "LGPL-2.1-only",
-          "description": "LGPL-2.1-only License"
-        },
-        {
-          "choice": "lgpl-2.1-only",
           "description": "LGPL-2.1-only License"
         }
       ]
@@ -487,6 +455,22 @@
     }
   },
   "specialCustomOperations": {
+    "**/*.sln": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "endif": [ "#endif" ],
+            "actionableIf": [ "#if" ],
+            "actionableElse": [ "#else" ],
+            "actionableElseif": [ "#elseif", "#elif" ],
+            "trim": "true",
+            "wholeLine": "true",
+            "evaluator": "C++"
+          }
+        }
+      ]
+    },
     "**/*.slnx": {
       "operations": [
         {
@@ -558,6 +542,7 @@
       "target": "./",
       "exclude": [
         ".template.config/**",
+        "solutions/**",
         "src/**",
         "tests/**",
         "benchmarks/**",
@@ -570,6 +555,16 @@
         "**/obj/**",
         "**/.vs/**"
       ]
+    },
+    {
+      "source": "solutions/dotnet-8/",
+      "target": "./",
+      "condition": "(EffectiveTargetFramework == 'net8.0' || EffectiveSdkVersion == '8.0.428')"
+    },
+    {
+      "source": "solutions/dotnet-9+/",
+      "target": "./",
+      "condition": "(EffectiveTargetFramework == 'net9.0' || EffectiveSdkVersion == '9.0.321' || EffectiveTargetFramework == 'net10.0' || EffectiveSdkVersion == '10.0.404' || EffectiveTargetFramework == 'net11.0' || EffectiveSdkVersion == '11.0.100')"
     },
     {
       "source": "src/",
