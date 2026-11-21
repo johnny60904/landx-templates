@@ -9,35 +9,44 @@
     <!--#endif -->
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <!--#if (EffectiveSdkVersion == '10.0.404' || EffectiveSdkVersion == '11.0.100' || EffectiveTargetFramework == 'net10.0' || EffectiveTargetFramework == 'net11.0') -->
+    <!--#if (TestRunner == 'MTP') -->
     <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
-    <OutputType>Exe</OutputType>
+    <!--#if (IsSdk8 || IsSdk9)-->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <!--#endif -->
+    <!--#endif -->
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <!--#if (BuildConfig || Preset == 'full') -->
   <ItemGroup>
-    <!--#if (EffectiveSdkVersion == '10.0.404' || EffectiveSdkVersion == '11.0.100' || EffectiveTargetFramework == 'net10.0' || EffectiveTargetFramework == 'net11.0') -->
+    <!--#if (TestRunner == 'MTP') -->
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage"/>
     <!--#else -->
     <PackageReference Include="coverlet.collector"/>
-    <!--#endif -->
-    <PackageReference Include="FluentAssertions"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio" />
+    <!--#endif -->
+    <!--#if (TestRunner == 'MTP') -->
+    <PackageReference Include="xunit.v3" />
+    <!--#else -->
+    <PackageReference Include="xunit.v3.mtp-off" />
+    <!--#endif -->
   </ItemGroup>
   <!--#else -->
   <ItemGroup>
-    <!--#if (EffectiveSdkVersion == '10.0.404' || EffectiveSdkVersion == '11.0.100' || EffectiveTargetFramework == 'net10.0' || EffectiveTargetFramework == 'net11.0') -->
+    <!--#if (TestRunner == 'MTP') -->
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
     <!--#else -->
     <PackageReference Include="coverlet.collector" Version="10.1.1" />
-    <!--#endif -->
-    <PackageReference Include="FluentAssertions" Version="8.11.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
-    <PackageReference Include="xunit.v3" Version="4.0.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" />
+    <!--#endif -->
+    <!--#if (TestRunner == 'MTP') -->
+    <PackageReference Include="xunit.v3" Version="4.0.3" />
+    <!--#else -->
+    <PackageReference Include="xunit.v3.mtp-off" Version="4.0.3" />
+    <!--#endif -->
   </ItemGroup>
   <!--#endif -->
 

@@ -29,10 +29,6 @@
             "longName": "target-framework",
             "shortName": "tfm"
         },
-        "Version": {
-            "longName": "version",
-            "shortName": "ver"
-        },
         "BuildConfig": {
             "longName": "build-config",
             "shortName": "bc"
@@ -40,6 +36,10 @@
         "Preset": {
             "longName": "preset",
             "shortName": "ps"
+        },
+        "TestRunner": {
+            "longName": "test-runner",
+            "shortName": "test"
         },
         "GitHubOwner": {
             "longName": "github-owner",

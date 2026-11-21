@@ -1,13 +1,9 @@
 {
   "sdk": {
-    //#if (Preset == 'full' && Version == '' && SdkVersion == '')
-    "version": "10.0.404",
-    //#else
     "version": "__SdkVersion__",
-    //#endif
     "rollForward": "latestFeature",
     "allowPrerelease": false
-  //#if (EffectiveSdkVersion == '10.0.404' || EffectiveSdkVersion == '11.0.100' || EffectiveTargetFramework == 'net10.0' || EffectiveTargetFramework == 'net11.0')
+  //#if (TestRunner == 'MTP' && (IsSdk10 || IsSdk11))
   }, "test": {
     "runner": "Microsoft.Testing.Platform"
   //#endif

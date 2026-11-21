@@ -68,7 +68,6 @@
 //#endif
 
 using MyNamespace.MyProject;
-using Xunit;
 
 namespace MyNamespace.MyProject.Tests;
 
