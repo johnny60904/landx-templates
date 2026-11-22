@@ -482,6 +482,8 @@ $RECYCLE.BIN/
 *.swp
 
 # Custom
-bin/
-obj/
 .vs/
+**/bin/
+**/obj/
+tests/artifacts/
+tests/logs/
