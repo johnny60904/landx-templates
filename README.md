@@ -24,19 +24,35 @@ It provides a consistent project structure, configurable target frameworks, and 
 
 - **Multiple project types:** Generate Class Library or Console Application projects.
 
-- **Configurable project structure:** Choose the standard or full preset, or use --simple for a minimal setup.
+- **Configurable project structure:** Choose the standard or full preset, or use `--simple` for a minimal setup.
 
-- **Flexible version selection:** Configure the SDK version and target framework independently or use --version as a shared input.
+- **Explicit SDK selection:** Specify the required .NET SDK version through `--sdk-version`.
+
+- **Target framework normalization:** Automatically adjusts the target framework when it exceeds the selected SDK version.
+
+- **SDK-compatible solution format:** Generates `.sln` for .NET SDK 8 and `.slnx` for .NET SDK 9 and later.
 
 - **Optional tests:** Include a test project in the standard configuration.
 
-- **Optional benchmarks:** Include a benchmark project with --benchmarks.
+- **Configurable test runner:** Choose between VSTest or Microsoft.Testing.Platform (MTP).
 
-- **Optional documentation:** Include architecture decision records with --docs.
+- **Runner-specific configuration:** Generates compatible test project settings, package references, and SDK configuration based on the selected test runner.
 
-- **Optional GitHub Actions:** Include workflow configuration with --github-actions.
+- **Optional benchmarks:** Include a benchmark project with `--benchmarks`.
 
-- **Optional shared build configuration:** Include centralized MSBuild and NuGet configuration with --build-config.
+- **Optional documentation:** Include architecture decision records with `--docs`.
+
+- **Optional GitHub Actions:** Include workflow configuration with `--github-actions`.
+
+- **Optional shared build configuration:** Include centralized MSBuild and NuGet configuration with `--build-config`.
+
+- **Configurable licensing:** Select from 10 supported open-source licenses.
+
+- **License-aware source headers:** Automatically generates SPDX identifiers, copyright notices, and license-specific headers in generated C# source files.
+
+- **Configurable license copyright information:** Specify the copyright year and owner/holder.
+
+- **Configurable README metadata:** Customize GitHub repository links and license badges in generated README file.
 
 - **Automated package publishing:** Publish versioned template packages through GitHub Actions and NuGet Trusted Publishing.
 
@@ -44,7 +60,7 @@ It provides a consistent project structure, configurable target frameworks, and 
 
 ## .NET Version Support
 
-LanDX.Templates currently supports generating projects targeting multiple .NET versions. However, template compatibility does not imply that the corresponding .NET release is still supported by Microsoft.
+LanDX.Templates supports generating projects targeting .NET 8, .NET 9, .NET 10, and .NET 11. Template compatibility does not necessarily indicate that the corresponding .NET release is still supported by Microsoft.
 
 ### Microsoft Support Lifecycle
 
@@ -60,7 +76,7 @@ LanDX.Templates currently supports generating projects targeting multiple .NET v
 > [!IMPORTANT]
 > **.NET 8 and .NET 9 reached End of Support on November 10, 2026.**
 > 
-> Microsoft no longer provides servicing updates, security fixed, or technical support for these releases.
+> Microsoft no longer provides servicing updates, security fixes, or technical support for these releases.
 > 
 > LanDX.Templates currently retains the ability to generate .NET 8 and .NET 9 projects for compatibility purposes. However, these target frameworks are no longer recommended for new projects.
 
@@ -70,7 +86,7 @@ Out-of-support target frameworks may remain available in the template for compat
 
 However, their availability is not guaranteed across future template releases. Deprecated target frameworks may eventually be removed as part of a major release, based on maintenance requirements, compatibility considerations, and project direction.
 
-For new projects, we recommend targeting a currently supported .NET release .NET 10 (LTS) is the recommended choice when a longer support lifecycle is preferred.
+For new projects, we recommend targeting a currently supported .NET release. .NET 10 (LTS) is the recommended when a longer support lifecycle is preferred.
 
 For the latest release information and support dates, refer to Microsoft's official documentation:
 
@@ -136,35 +152,123 @@ The template short name is **landx-templates**.
 
 Create a Class Library using the default configuration (`-n` is short name for `--name`):
 
-`dotnet new landx-templates -n MyProject`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100`
 
 <br>
 
-To generate a project in a specific directory, use `--output` / `-o` (short name):
+Create a project in a specific directory, use `--output` / `-o` (short name):
 
-`dotnet new landx-templates -n MyProject -o <path>`
+`dotnet new landx-templates -n MyProject -o path/to/your/project --sdk-version 10.0.100`
 
 <br>
 
 Create a minimal project:
 
-`dotnet new landx-templates -n MyProject --simple`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --simple`
 
 <br>
 
 Create a Console Application:
 
-`dotnet new landx-templates -n MyProject --project-type console`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --project-type console`
 
 <br>
 
 Create a project with the full preset:
 
-`dotnet new landx-templates -n MyProject --preset full`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --preset full`
 
 <br>
 
-The available parameters and their defaults are described below.
+Create a project targeting .NET 11:
+
+`dotnet new landx-templates -n MyProject --sdk-version 11.0.100 --target-framework net11.0`
+
+<br>
+
+Create a project using MTP as the test runner:
+
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --test-runner MTP`
+
+<br>
+
+Create a project with a specific license:
+
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --license Apache-2.0`
+
+<br>
+
+The available parameters default values, and normalization rules are described below.
+
+---
+
+## Required Options
+
+### SDK Version
+
+Use `--sdk-version` / `-sdkv` (short name) to specify the .NET SDK version and used by the generated project.
+
+The parameter is ***required*** and has no default value.
+
+The specified SDK version is written to the generated `global.json` file.
+
+Example:
+
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100`
+
+<br>
+
+Supported input formats include:
+
+| Input format            | Example                                      |
+| ----------------------- | -------------------------------------------- |
+| Major version           | `8`, `9`, `10`, `11`                         |
+| Major and minor version | `8.0`, `9.0`, `10.0`, `11.0`                 |
+| Full SDK version        | `8.0.428`, `9.0.321`, `10.0.404`, `11.0.100` |
+| Version aliases         | `lts`, `sts`, `latest`                       |
+
+<br>
+
+The template normalizes supported inputs according to its configured rules.
+
+> [!IMPORTANT]
+> The specified SDK version must be available in the development or build environment. The template ***does not verify*** whether an arbitrary SDK version exists or is available for installation.
+> 
+> For additional information, see [SDK Version Validation](#sdk-version-validation).
+
+<br>
+
+The generated `global.json` configures the SDK version with the following settings:
+
+- `rollForward`: `latestFeature`
+
+- `allowPrerelease`: `false`
+
+<br>
+
+The selected SDK version also determines the default target framework compatibility and solution file format.
+
+---
+
+### SDK Version Validation
+
+The `--sdk-version` parameter accepts a text value and is ***not restricted*** to a predefined list of SDK versions.
+
+The template normalizes the supplied value but ***does not validate*** whether the specified SDK version has been officially released or is available for installation.
+
+Users are responsible for specifying a valid and available .NET SDK version.
+
+An unsupported or unavailable SDK version may still allow the template to generate project files successfully. However, subsequent .NET CLI operations, such as `dotnet restore`, `dotnet build`, and `dotnet test`, may fail during SDK resolution.
+
+For example, specifying an SDK version that does not exist in the corresponding .NET release history may result in a generated `global.json` that cannot be resolved by the installed .NET SDK.
+
+Always verify the requested SDK version against Microsoft's official .NET release information before generating a project.
+
+References:
+
+- [.NET SDK Releases](https://dotnet.microsoft.com/download/dotnet)
+
+- [.NET Releases and Support](https://learn.microsoft.com/dotnet/core/releases-and-support)
 
 ---
 
@@ -177,7 +281,7 @@ Use `--project-type` / `-pt` (short name) to select the project type.
 <br>
 
 | Value      | Description                        |
-|------------|------------------------------------|
+| ---------- | ---------------------------------- |
 | `classlib` | Class Library project.             |
 | `class`    | Class Library project alias.       |
 | `lib`      | Class Library project alias.       |
@@ -189,9 +293,81 @@ The default project type is **classlib**.
 
 Example:
 
-`dotnet new landx-templates -n MyProject --project-type console`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --project-type console`
 
 If `--project-type` is omitted, the template uses its configured default. The current default is intended to be a Class Library.
+
+---
+
+### Test Runner
+
+Use `--test-runner` / `-test` (short name) to select the test runner configuration for the generated test project.
+
+<br>
+
+| Value   | Description                      |
+| ------- | -------------------------------- |
+| `VTest` | Uses the VSTest test runner.     |
+| `MTP`   | Uses Microsoft.Testing.Platform. |
+
+<br>
+
+The default test runner is **VSTest**.
+
+<br>
+
+Example:
+
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --test-runner MTP`
+
+<br>
+
+The selected test runner determines the generated test project configuration and its associated NuGet package references.
+
+#### VSTest
+
+When VSTest is selected, the generated test project uses:
+
+- `Microsoft.NET.Test.SDK`
+
+- `xunit.runner.visualstudio`
+
+- `xunit.v3.mtp-off`
+
+- `coverlet.collector`
+
+#### Microsoft.Testing.Platform (MTP)
+
+When MTP is selected, the generated test project uses:
+
+- `xunit.v3`
+
+- `Microsoft.Testing.Extensions.CodeCoverage`
+
+The generated project also includes the required Microsoft.Testing.Platform configuration.
+
+<br>
+
+**SDK-specific configuration**
+
+The template generates additional configuration depending on the selected SDK version:
+
+| SDK Version       | MTP Configuration                                                            |
+| ----------------- | ---------------------------------------------------------------------------- |
+| .NET 8 / .NET 9   | Sets `TestingPlatformDotnetTestSupport` in the test project.                 |
+| .NET 10 / .NET 11 | Configures `Microsoft.Testing.Platform` as the test runner in `global.json`. |
+
+<br>
+
+.NET 8, .NET 9, .NET 10, .NET 11 all set `UseMicrosoftTestingPlatformRunner` in the test project.
+
+<br>
+
+When `--build-config` or `--preset full` is enabled, the corresponding package versions are centrally managed through `Directory.Packages.props`.
+
+Otherwise, package versions are specified directly in the generated test project file.
+
+The selected test runner does not change the target framework of the generated test project.
 
 ---
 
@@ -202,7 +378,7 @@ Use `--preset` / `-ps` (short name) to select a predefined project configuration
 <br>
 
 | Preset     | Description |
-|------------|-------------|
+| ---------- | ----------- |
 | `standard` | Includes the common project files, source project, and test project. |
 | `full`     | Enables the optional documentation, GitHub Actions, benchmarks, and build configuration, together with automatic LTS SDK and target framework selection. |
 
@@ -212,25 +388,32 @@ The default preset is **standard**.
 
 <br>
 
+When `--simple` and `--preset full` are specified together, `--preset full` takes precedence. 
+
+<br>
+
 Create a standard project:
 
-`dotnet new landx-templates -n MyProject --preset standard`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --preset standard`
 
 <br>
 
 Create a full project:
 
-`dotnet new landx-templates -n MyProject --preset full`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --preset full`
 
 <br>
 
 The full preset enables the equivalent of the following options:
 
 - `--docs`
+
 - `--github-actions`
+
 - `--benchmarks`
+
 - `--build-config`
-- Latest stable long-term support (LTS) SDK selection
+
 - Latest stable LTS target framework selection
 
 The exact SDK and target framework versions depend on the template's normalization rules and the available version metadata.
@@ -241,7 +424,7 @@ The exact SDK and target framework versions depend on the template's normalizati
 
 Use `--simple` / `-smp` (short name) to generate a minimal project structure.
 
-`dotnet new landx-templates -n MyProject --simple`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --simple`
 
 The simple configuration includes the common project files and source project, without the test project or optional components.
 
@@ -256,7 +439,7 @@ The following switches enable additional files or directories.
 <br>
 
 | Option             | Description                                                                                                    |
-|--------------------|----------------------------------------------------------------------------------------------------------------|
+| ------------------ | -------------------------------------------------------------------------------------------------------------- |
 | `--docs`           | Includes the **docs**/ directory and architecture decision records.                                            |
 | `--github-actions` | Includes the **.github**/ directory and workflow configuration.                                                |
 | `--benchmarks`     | Includes the **benchmarks**/ directory and benchmark project.                                                  |
@@ -266,7 +449,7 @@ The following switches enable additional files or directories.
 <br>
 
 | Option             | Short Name |
-|--------------------|------------|
+| ------------------ | ---------- |
 | `--docs`           | `-dc`      |
 | `--github-actions` | `-ga`      |
 | `--benchmarks`     | `-bm`      |
@@ -276,65 +459,15 @@ The following switches enable additional files or directories.
 
 For example:
 
-`dotnet new landx-templates -n MyProject --docs --github-actions --benchmarks --build-config`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --docs --github-actions --benchmarks --build-config`
 
 Optional components are excluded unless enabled by the selected preset or explicit options, subject to the precedence rules described in this document.
 
 ---
 
-### SDK Version and Target Framework
+### Target Framework
 
-The template provides three parameters for selecting the SDK version and target framework.
-
-<br>
-
-| Option               | Purpose                                                                                           |
-|----------------------|---------------------------------------------------------------------------------------------------|
-| `--sdk-version`      | Selects the SDK version written to the generated **global.json.**                                 |
-| `--target-framework` | Selects the target framework written to the generated project **.csproj** files.                  |
-| `--version`          | Applies the normalized shared version input to both SDK selection and target framework selection. |
-
-<br>
-
-| Option               | Short Name |
-|----------------------|------------|
-| `--sdk-version`      | `-sdkv`    |
-| `--target-framework` | `-tfm`     |
-| `--version`          | `-ver`     |
-
-<br>
-
----
-
-### SDK version
-
-Use `--sdk-version` / `-sdkv` (short name) to configure the generated global.json.
-
-`dotnet new landx-templates -n MyProject --sdk-version 10.0.107`
-
-<br>
-
-The template normalizes supported inputs according to its configured rules. The selected SDK version must be available in the development or build environment.
-
-<br>
-
-Examples:
-
-`dotnet new landx-templates -n MyProject --sdk-version 8`
-
-`dotnet new landx-templates -n MyProject --sdk-version 9.0`
-
-`dotnet new landx-templates -n MyProject --sdk-version 9.0.321`
-
-`dotnet new landx-templates -n MyProject --sdk-version lts`
-
-`dotnet new landx-templates -n MyProject --sdk-version latest`
-
----
-
-### Target framework
-
-Use `--target-framework` / `-tfm` (short name) to select the target framework for the generated project .csproj files.
+Use `--target-framework` / `-tfm` (short name) to select the target framework for the generated project files.
 
 <br>
 
@@ -349,64 +482,39 @@ Supported inputs include:
 
 <br>
 
-Example:
+The default target framework is **net10.0**.
 
-`dotnet new landx-templates -n MyProject --target-framework net8.0`
+#### SDK Compatibility and Target Framework Normalization
 
-<br>
+The requested target framework is automatically normalized to ensure compatibility with the selected SDK version.
 
-The normalized target framework is applied to the generated project .csproj files.
+If the requested target framework is higher than the selected SDK version, the template adjusts the target framework to match the SDK's major version.
 
----
-
-### Shared version selection
-
-Use `--version` / `-ver` (short name) when you want to select the SDK and target framework together.
-
-`dotnet new landx-templates -n MyProject --version 10`
-
-<br>
-
-The result will be:
-
-**Target Framework:** net10.0
-
-**SDK Version**: 10.0.404
-
-<br>
-
-The input is normalized according to the template configuration and applied to both global.json and the generated project .csproj files.
-
-<br>
-
-**Important:** The SDK version and target framework are different concepts. The SDK version determines the .NET tooling used to build the project; the target framework determines the framework against which the project is compiled. A shared input does not mean that these two version values are identical.
-
----
-
-### Version precedence
-
-If multiple version parameters are supplied, the template applies the following precedence:
-
-1. `--version`
-2. `--sdk-version` and `--target-framework`, independently
-
-<br>
+If the requested target framework is equal to or lower than the selected SDK version, the requested target framework is preserved.
 
 For example:
 
-`dotnet new landx-templates -n MyProject --preset full --version 9 --sdk-version lts --target-framework 8.0`
+| SDK Version | Requested Target Framework | Generated Target Framework |
+| ----------- | -------------------------- | -------------------------- |
+| `8.0.428`   | `net11.0`                  | `net8.0`                   |
+| `9.0.321`   | `net11.0`                  | `net9.0`                   |
+| `10.0.404`  | `net11.0`                  | `net10.0`                  |
+| `11.0.100`  | `net10.0`                  | `net10.0`                  |
+| `11.0.100`  | `net11.0`                  | `net11.0`                  |
 
 <br>
 
-In this example, `--version` takes precedence over the other version parameters and the automatic version selection provided by the full preset. The generated SDK and target framework are determined by the normalized value of `--version`.
+This behavior prevents the generated project from targeting a framework version higher than the selected SDK version.
+
+Example:
+
+`dotnet new landx-templates -n MyProject --sdk-version 8.0.428 --target-framework net11.0`
+
+The resulting project targets `net8.0`.
 
 <br>
 
-When automatic version selection is activated and no explicit version parameter is supplied (`--version`, `--sdk-version`, and `--target-framework`), the template selects the latest stable LTS SDK and target framework according to its normalization rules.
-
-<br>
-
-The plain default invocation and the standard preset do not, by themselves, imply that every optional file is generated. Refer to the preset and parameter behavior documented above.
+The normalized target framework is applied consistently to the generated project files, including the source project, test project, and benchmark project when applicable.
 
 ---
 
@@ -420,7 +528,7 @@ Use `--github-repo` / `-repo` (short name) to configure the repository name used
 
 Example:
 
-`dotnet new landx-templates -n MyProject --github-owner LanDX --github-repo MyProject`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --github-owner LanDX --github-repo MyProject`
 
 <br>
 
@@ -436,7 +544,9 @@ Ensure that the supplied owner and repository values correspond to the intended 
 
 Use `--license` / `-lcn` (short name) to select the license for the generated project.
 
-The default license is MIT.
+<br>
+
+The default license is **MIT**.
 
 <br>
 
@@ -455,6 +565,7 @@ LanDX.Templates currently supports generating projects with the following 10 ope
 | LGPL-2.1-only           | GNU Lesser General Public License v2.1 only  | **COPYING**, **COPYING.LESSER** |
 | AGPL-3.0-only           | GNU Affero General Public License v3.0 only  | **COPYING**                     |
 | MPL-2.0                 | Mozilla Public License 2.0                   | **LICENSE**                     |
+| Apache-2.0              | Apache License 2.0                           | **LICENSE**                     |
 
 <br>
 
@@ -462,25 +573,21 @@ LanDX.Templates currently supports generating projects with the following 10 ope
 
 Specify a license identifier when generating a project:
 
-```txt
-dotnet new landx-templates -n MyProject --license Apache-2.0
-```
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --license Apache-2.0`
 
 Additional examples:
 
-```txt
-dotnet new landx-templates -n MyProject --license MIT
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --license MIT`
 
-dotnet new landx-templates -n MyProject --license BSD-3-Clause
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --license BSD-3-Clause`
 
-dotnet new landx-templates -n MyProject --license GPL-3.0-only
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --license GPL-3.0-only`
 
-dotnet new landx-templates -n MyProject --license LGPL-2.1-only
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --license LGPL-2.1-only`
 
-dotnet new landx-templates -n MyProject --license AGPL-3.0-only
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --license AGPL-3.0-only`
 
-dotnet new landx-templates -n MyProject --license MPL-2.0
-```
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --license MPL-2.0`
 
 <br>
 
@@ -490,17 +597,19 @@ The template automatically generates the license file(s) corresponding to the se
 
 Depending on the selected license, the generated project includes:
 
-- LICENSE
+- **LICENSE**
 
-- COPYING
+- **COPYING**
 
-- COPYING, COPYING.LESSER
+- **COPYING**, **COPYING.LESSER**
 
-Only hte files required by the selected license are generated.
+Only the files required by the selected license are generated.
 
-The generated README also updates its ## License section and license badge to reflect the selected license identifier.
+The generated **README** also updates its `## License section` and `license badge` to reflect the selected license identifier.
 
 <br>
+
+---
 
 ### Copyright Information
 
@@ -515,15 +624,13 @@ Use the following parameters to customize copyright information in the generated
 
 Example:
 
-```txt
-dotnet new landx-templates -n MyProject --license MIT --copyright-year 2026 --copyright-owner "John Doe"
-```
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --license MIT --copyright-year 2026 --copyright-owner "John Doe"`
 
 The default values are placeholders. Specify the appropriate copyright year and copyright owner/holder when generating your project, and review the generated license file(s) before distribution.
 
 **Important Notes**
 
-- The default license is MIT when --license is omitted.
+- The default license is **MIT** when --license is omitted.
 
 - Use one of the supported license identifier listed above.
 
@@ -534,6 +641,46 @@ The default values are placeholders. Specify the appropriate copyright year and 
 For official license identifiers and their definitions, see the SPDX License List.
 
 [&rarr; SPDX License List](https://spdx.org/licenses/)
+
+---
+
+### C# Source File Headers
+
+The selected license also determines the license-related headers generated in C# source files.
+
+The template automatically generates the following information:
+
+- SPDX license identifier.
+
+- Copyright notice.
+
+- License-specific header and license statement.
+
+<br>
+
+These headers are generated consistently across the applicable C# source files in the generated project, including:
+
+- `src/**/*.cs`
+
+- `tests/**/*.cs`
+
+- `benchmarks/**/*.cs`
+
+<br>
+
+The generated headers reflect the selected `--license`, `--copyright-year`, and `--copyright-owner` parameters.
+
+For example, when MIT is selected, the generated source file begins with:
+
+```csharp
+// SPDX-License-Identifier: MIT
+// 
+// Copyright (C) 2026 John Doe
+```
+
+For license that require addtional notices, the template generates the corresponding license-specific header.
+
+The generated source file headers are intended to identify the applicable license and copyright information. They do not replace the complete license file(s) generated in the project root.
 
 ---
 
@@ -555,8 +702,9 @@ MyNamespace.MyProject/
 ├── .editorconfig
 ├── .gitattributes
 ├── .gitignore
+├── global.json                     # Generated using required --sdk-version
 ├── LICENSE                         # Default MIT
-├── MyNamespace.MyProject.slnx
+├── MyNamespace.MyProject.sln[x]    # .sln for .NET SDK 8; .slnx for .NET SDK 9 and later
 └── README.md
 ```
 
@@ -571,7 +719,6 @@ MyNamespace.MyProject/
 │   └── MyNamespace.MyProject.Benchmarks/
 ├── docs/                                 # --docs
 │   └── architecture-decision-records.md
-├── global.json                           # --version/--sdk-version
 ├── Directory.Build.props                 # --build-config
 ├── Directory.Build.targets               # --build-config
 └── Directory.Packages.props              # --build-config
@@ -589,37 +736,48 @@ The solution file is also configured to include the appropriate project folders 
 
 ### Minimal Class Library
 
-`dotnet new landx-templates -n MyProject --simple --project-type classlib`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --simple --project-type classlib`
 
 <br>
 
 ### Standard Console Application
 
-`dotnet new landx-templates -n MyProject --project-type console`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --project-type console`
 
 <br>
 
 ### Full Class Library Targeting .NET 10
 
-`dotnet new landx-templates -n MyProject --preset full --project-type classlib --target-framework net10.0`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --preset full --project-type classlib --target-framework net10.0`
 
 <br>
 
 ### Custom SDK and Target Framework
 
-`dotnet new landx-templates -n MyProject --sdk-version 10 --target-framework net9.0`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --target-framework net9.0`
 
-<br>
+---
 
-### Explicit Shared Version
+### SDK-Dependent Generated Files
 
-`dotnet new landx-templates -n MyProject --version 10`
+Some generated files are configured according to the selected SDK version and test runner.
+
+| Generated File   | Condition                     | Configuration                                                 |
+| ---------------- | ----------------------------- | ------------------------------------------------------------- |
+| `global.json`    | MTP with .NET SDK 10 or later | Includes `test.runner` set to `Microsoft.Testing.Platform`.   |
+| `*.Tests.csproj` | MTP selected                  | Includes MTP-specific test properties and package references. |
+| `*.sln`          | .NET SDK 8                    | Uses the legacy solution format.                              |
+| `*.slnx`         | .NET SDK 9 or later           | Uses the XML-based solution format.                           |
+
+When `--build-config` or `--preset full` is enabled, test package versions are centrally managed through `Directory.Packages.props`.
 
 ---
 
 ## Development
 
 This section describes how to develop, test, and package the template itself, rather than a project generated from it.
+
+---
 
 ### Repository Structure
 
@@ -637,15 +795,29 @@ LanDX.Templates/
 │       ├── tests/
 │       ├── README.md
 │       └── ...
+├── tests/
+│   ├── artifacts/                       # Generated test projects
+│   ├── logs/                            # Structural assertion reports
+│   └── create-and-test-templates.ps1    # Local test automation
+├── docs/
+│   └── architecture-decision-record.md
 ├── LanDX.Templates.csproj
-└── README.md
+├── LICENSE
+├── README.md
+└── README.NuGet.md
 ```
 
-The **content/landx-templates/** directory contains the source files for the generated template. Its **.template.config/template.json** defines the template identity, parameters, normalization rules, and file inclusion behavior.
+The `content/landx-templates/` directory contains the source files for the generated template. Its `.template.config/template.json` defines the template identity, parameters, normalization rules, and file inclusion behavior.
 
-The root **LanDX.Templates.csproj** packages the template content into a NuGet package.
+The root `LanDX.Templates.csproj` packages the template content into a NuGet package.
 
-Build output and intermediate files are generated under bin/ and obj/ when applicable.
+The `tests/` directory contains the local template verification script, generated test artifacts, and structural assertion reports.
+
+- `tests/artifacts/` stores projects generated during test execution.
+
+- `tests/logs/` stores per-test-case structureal assertion reports.
+
+Build output and intermediate files are generated under **bin/** and **obj/** when applicable.
 
 ---
 
@@ -664,132 +836,225 @@ These commands install the authoring templates and create a template pack projec
 
 ### Test Locally
 
-Before packaging or publishing a template release, install or otherwise make the template available to the local .NET CLI and test representative project configurations.
+The repository includes a PowerShell-based test suite for verifying the behavior of the template during development.
 
-The local test workflow uses a separate directory for generated artifacts:
+The test suite generates projects using different template configurations, checks the generated project structure, and executes applicable .NET CLI operations to verify that the generated projects can be built, tested, and run.
+
+#### Prerequisites
+
+- PowerShell 7.6.8 or later (PowerShell Core)
+
+- .NET SDKs for .NET 8, .NET 9, .NET 10, and .NET 11.
+
+- The `landx-templates` template must be installed and available through the local .NET CLI.
+
+The test script requires PowerShell 7.6.8 or later and explicitly selects SDK versions 8, 9, 10, and 11 across its test cases.
+
+#### Install the Local Template
+
+Before running the test suite, ensure that the template from the current repository source is installed.
+
+From the repository root, run:
+
+`dotnet new install ./content/landx-templates`
+
+Verify that the template is available:
+
+`dotnet new list landx-templates`
+
+Make sure the installed template corresponds to the current source being tested rather than an older published package version.
+
+#### Run the Test Suite
+
+Execute the test script from the repository root:
+
+`pwsh -NoProfile -File ./tests/create-and-test-templates.ps1`
+
+Alternatively, run it directly from PowerShell:
+
+`./tests/create-and-test-templates.ps1`
+
+The script automatically generates test projects under `tests/artifacts/`, performs structural validation, and executes the applicable .NET CLI operations.
+
+#### Test Artifacts and Logs
+
+The test script automatically creates the `artifacts/` and `logs/` directories under `tests/`.
+
+The generated directory structure is as follows:
 
 ```txt
-TemplateTest/
-└── artifacts/
-    ├── T01.DefaultClassLibrary/
-    ├── T02.DefaultSimple/
-    ├── T03.DefaultConsole/
-    ├── T04.DefaultBenchmarks/
-    ├── T05.DefaultDocs/
-    ├── T06.DefaultGitHubActions/
-    ├── T07.DefaultBuildConfig/
-    ├── T08.DefaultSdkVersion/
-    ├── T09.DefaultTargetFramework/
-    ├── T10.FullPreset/
-    ├── T11.UnifiedVersionPriorSpecifiedVersionAndFullPreset/
-    ├── B01.SimplePriorBenchmarks/
-    ├── B02.SimpleDocs/
-    ├── B03.SimpleGitHubActions/
-    ├── B04.SimpleBuildConfig/
-    ├── B05.ClassLibraryDocsGitHubActions/
-    ├── B06.StandardPreset/
-    ├── B07.FullPresetPriorSimple/
-    ├── B08.FullPresetSdkVersion/
-    ├── B09.FullPresetTargetFramework/
-    ├── B10.FullPresetConsole/
-    ├── B11.DefaultClassLibraryTargetFramework/
-    ├── B12.DefaultConsoleTargetFramework/
-    ├── B13.ClassLibraryTargetFramework/
-    └── BB14.ConsoleTargetFramework/
+tests/
+├── artifacts/
+│   ├── T01.DefaultClassLibrary/
+│   ├── ...
+│   └── B16.NormalizedCorrespondingTfm/
+├── logs/
+│   ├── T01.DefaultClassLibrary.log
+│   ├── ...
+│   ├── B15.DefaultClassLibWithSln.log
+│   └── B16.NormalizedCorrespondingTfm.log
+└── create-and-test-templates.ps1
 ```
 
-<br>
-<br>
+The `artifacts/` directory stores the generated projects used by the test suite.
 
-| Test Project                                         | Command                                                                |
-|------------------------------------------------------|------------------------------------------------------------------------|
-| T01.DefaultClassLibrary                              | `dotnet new landx-templates -n T01.DefaultClassLibrary -o T01.DefaultClassLibrary` |
-| T02.DefaultSimple                                    | `dotnet new landx-templates -n T02.DefaultSimple -o T02.DefaultSimple --simple` |
-| T03.DefaultConsole                                   | `dotnet new landx-templates -n T03.DefaultConsole -o T03.DefaultConsole --project-type console` |
-| T04.DefaultBenchmarks                                | `dotnet new landx-templates -n T04.DefaultBenchmarks -o T04.DefaultBenchmarks --benchmarks` |
-| T05.DefaultDocs                                      | `dotnet new landx-templates -n T05.DefaultDocs -o T05.DefaultDocs --docs` |
-| T06.DefaultGitHubActions                             | `dotnet new landx-templates -n T06.DefaultGitHubActions -o T06.DefaultGitHubActions --github-actions` |
-| T07.DefaultBuildConfig                               | `dotnet new landx-templates -n T07.DefaultBuildConfig -o T07.DefaultBuildConfig --build-config` |
-| T08.DefaultSdkVersion                                | `dotnet new landx-templates -n T08.DefaultSdkVersion -o T08.DefaultSdkVersion --sdk-version 10.0.100` |
-| T09.DefaultTargetFramework                           | `dotnet new landx-templates -n T09.DefaultTargetFramework -o T09.DefaultTargetFramework --target-framework 8` |
-| T10.FullPreset                                       | `dotnet new landx-templates -n T10.FullPreset -o T10.FullPreset --preset full` |
-| T11.UnifiedVersionPriorSpecifiedVersionAndFullPreset | `dotnet new landx-templates -n T11.UnifiedVersionPriorSpecifiedVersionAndFullPreset -o T11.UnifiedVersionPriorSpecifiedVersionAndFullPreset --preset full --sdk-version 8 --target-framework 8 --version 9` |
-| B01.SimplePriorBenchmarks                            | `dotnet new landx-templates -n B01.SimplePriorBenchmarks -o B01.SimplePriorBenchmarks --simple --benchmarks` |
-| B02.SimpleDocs                                       | `dotnet new landx-templates -n B02.SimpleDocs -o B02.SimpleDocs --simple --docs` |
-| B03.SimpleGitHubActions                              | `dotnet new landx-templates -n B03.SimpleGitHubActions -o B03.SimpleGitHubActions --simple --github-actions` |
-| B04.SimpleBuildConfig                                | `dotnet new landx-templates -n B04.SimpleBuildConfig -o B04.SimpleBuildConfig --simple --build-config` |
-| B05.ClassLibraryDocsGitHubActions                    | `dotnet new landx-templates -n B05.ClassLibraryDocsGitHubActions -o B05.ClassLibraryDocsGitHubActions --benchmarks --docs --github-actions` |
-| B06.StandardPreset                                   | `dotnet new landx-templates -n B06.StandardPreset -o B06.StandardPreset --preset standard` |
-| B07.FullPresetPriorSimple                            | `dotnet new landx-templates -n B07.FullPresetPriorSimple -o B07.FullPresetPriorSimple --preset full --simple` |
-| B08.FullPresetSdkVersion                             | `dotnet new landx-templates -n B08.FullPresetSdkVersion -o B08.FullPresetSdkVersion --preset full --sdk-version 10.0.107` |
-| B09.FullPresetTargetFramework                        | `dotnet new landx-templates -n B09.FullPresetTargetFramework -o B09.FullPresetTargetFramework --preset full --target-framework 9` |
-| B10.FullPresetConsole                                | `dotnet new landx-templates -n B10.FullPresetConsole -o B10.FullPresetConsole --preset full --project-type console` |
-| B11.DefaultClassLibraryTargetFramework               | `dotnet new landx-templates -n B11.DefaultClassLibraryTargetFramework -o B11.DefaultClassLibraryTargetFramework --project-type classlib --target-framework 9` |
-| B12.DefaultConsoleTargetFramework                    | `dotnet new landx-templates -n B12.DefaultConsoleTargetFramework -o B12.DefaultConsoleTargetFramework --project-type console --target-framework 8` |
-| B13.ClassLibraryTargetFramework                      | `dotnet new landx-templates -n B13.ClassLibraryTargetFramework -o B13.ClassLibraryTargetFramework --project-type classlib --target-framework 9 --benchmarks` |
-| BB14.ConsoleTargetFramework                          | `dotnet new landx-templates -n B14.ConsoleTargetFramework -o B14.ConsoleTargetFramework --project-type classlib --target-framework 8 --benchmarks` |
+The `logs/` directory stores structural assertion reports for project-generation test cases (T01-T15 and B01-B16).
 
-<br>
-<br>
+The logs are generated by `Invoke-TestCase` and contain:
 
-The local verification suite covers the following areas:
+- Local and UTC timestamps for the test section.
 
-| Area                 | Verification                                                                                         |
-|----------------------|------------------------------------------------------------------------------------------------------|
-| Default generation   | Required files and default project structure.                                                        |
-| Simple mode          | Exclusion of tests and optional components.                                                          |
-| Project type         | Class Library and Console Application selection.                                                     |
-| Optional components  | Benchmarks, documentation, GitHub Actions, and shared build configuration.                           |
-| Presets              | Standard and full configurations.                                                                    |
-| Version selection    | SDK version, target framework, normalization, and precedence.                                        |
-| File relocation      | Root-level build configuration files and global.json.                                                |
-| Solution structure   | Correct project folder references in the generated .slnx.                                            |
-| README and license   | Correct source-name substitutions, repository URLs, badges, and license text.                        |
-| Parameter validation | Unsupported choices fail as expected.                                                                |
-| Template discovery   | The template appears in dotnet new list and its options appear in dotnet new landx-templates --help. |
+- The corresponding test case name.
 
-The test suite also includes conflicting parameter combinations, including --simple with --benchmarks and --version with other version options.
+- Assertion results indicating whether expected generated files exist.
 
----
+- Section separators used to organize the results.
 
-### Validate Generated Projects
-
-For each generated test project, run the following commands:
+For example:
 
 ```txt
+
+Local Date Time: 2026-11-22T16:47:36+08:00
+
+Universal Date Time: 2026-11-22T08:47:36Z
+
+------------------------------------------------------
+T01.DefaultClassLibrary
+------------------------------------------------------
+
+------------------------------------------------------
+    - [T01] Passed: Assertion existence - ".editorconfig"
+    - [T01] Passed: Assertion existence - ".gitattributes"
+    - [T01] Passed: Assertion existence - ".gitignore"
+    - [T01] Passed: Assertion existence - "README.md"
+    - [T01] Passed: Assertion existence - "LICENSE"
+    - [T01] Passed: Assertion existence - "T01.DefaultClassLibrary.slnx"
+    - [T01] Passed: Assertion existence - "global.json"
+    - [T01] Passed: Assertion existence - "MyClass.cs"
+    - [T01] Passed: Assertion existence - "T01.DefaultClassLibrary.csproj"
+    - [T01] Passed: Assertion existence - "UnitTest1.cs"
+    - [T01] Passed: Assertion existence - "T01.DefaultClassLibrary.Tests.csproj"
+------------------------------------------------------
+
+```
+
+#### Logging Behavior
+
+- **Separate assertion reports:** Each project-generation test case handled by `Invoke-TestCase` writes its assertion results to a separate .log file.
+
+- **Automatic generation:** The `logs/` directory is created automatically when the test script runs.
+
+- **Overwrite existing reports:** Existing test logs are removed at the beginning of a test run, and the corresponding files are written again as their test cases execute.
+
+- **Assertion-only content:** Log files contain explicitly recorded structural assertion results. They are not complete console transcripts or test execution logs.
+
+- **Terminal output:** PowerShell write-Host messages and .NET CLI output are displayed directly in the terminal. Their console output is not captured in these log files.
+
+- **Plain-text format:** Log files contain plain-text assertion messages without console foreground/background color information.
+
+The log files are intended to provide a convenient way to inspect whether the expected generated files exist for each project configuration.
+
+#### Command test cases (**C00-C01** and **E00-E04**) do not currently generate individual log files.
+
+Their command output is displayed in the terminal only.
+
+The `tests/logs/` directory is intended for local diagnostic output and should be excluded from source control.
+
+#### Test Coverage
+
+The test suite is organized into the following test groups:
+
+| Test Group | Coverage |
+| ---------- | -------- |
+| T01-T15 | Default configurations, Class Library and Console Application generation, simple mode, optional components, SDK and target framework selection, license, and VSTest/MTP configurations. |
+| B01-B16 | Combined parameter configurations, feature precedence, preset interactions, SDK and target framework compatibility, project type variations, benchmark integration, and solution format selection. |
+| C00-C01 | .NET CLI help output and template discovery commands. |
+| E00-E04 | Negative test cases covering missing required parameters and unsupported parameter values. |
+
+The test suite covers both individual template options and combinations of parameters to exercise configuration precedence and conditional file generation.
+
+#### Automated Validation
+
+For each generated project, the test script performs the applicable checks.
+
+**1. Structural validation**
+
+The script checks the existence of expected generated files and directories, including:
+
+- Common repository/project files such as .editorconfig, .gitattributes, .gitignore, and README.md.
+
+- License files corresponding to the selected license type.
+
+- The generated solution file and global.json.
+
+- Required source project files.
+
+- Test project files when applicable.
+
+- Benchmark, documentation, GitHub Actions, and shared build configuration files when enabled.
+
+These checks verify the existence of the expected paths. They do not inspect the contents of the generated files.
+
+**2. Build and execution validation**
+
+The script executes the following .NET CLI commands for generated projects:
+
+```text
 dotnet clean
 dotnet restore
 dotnet build --no-restore
-dotnet test --no-build
 ```
 
-<br>
+For configurations that include a test project, it also executes:
 
-For generated Console Applications, also run the application:
+`dotnet test --no-build`
 
-`dotnet run --project <ProjectName>/<ProjectName>.csproj`
+For console Applications, the script additionally runs the generated application using:
 
-Replace `<ProjectName>` with the actual generated project directory and project name.
+`dotnet run`
 
-<br>
+These operations provide basic verification that the generated projects can be cleaned, restored, built, tested, and executed as applicable.
 
-The local verification suite checks that generated projects can be restored, built, tested, and executed where applicable.
+Their standard output and standard error are displayed in the terminal and are not included in the structural assertion reports.
 
-<br>
+**3. Command validation**
 
-Negative tests verify that unsupported choices are rejected:
+The test suite executes additional .NET CLI scenarios:
 
-```txt
-dotnet new landx-templates -n E01 --project-type invalid
-dotnet new landx-templates -n E02 --target-framework net7.0
-dotnet new landx-templates -n E03 --preset invalid
-```
+- C00: Displays template help information.
 
-These commands are expected to fail because the supplied choice values are unsupported.
+- C01: Lists the installed LanDX.Templates.
 
-<br>
+- E00: Checks the expected exit code when the required `--sdk-version` parameter is missing.
 
-Inspect the generated files as well as command exit codes. A successful template invocation alone does not guarantee that the generated solution, configuration files, and documentation are correct.
+- E01-E04: Checks the expected exit codes for invalid project type, target framework, preset, and license values.
+
+The negative test cases validate their expected native process exit codes. The help and template discovery cases currently display their command output for inspection but do not perform automated content matching against that output.
+
+**4. Current Validation Scope**
+
+The current test suite combines structural existence checks with basic .NET CLI execution checks.
+
+> [!IMPORTANT]
+> **The automated structural checks do not yet perform comprehensive content-level validation of generated files.**
+
+In particular, the current automated checks do not verify the following:
+
+- **C# source file content:** SPDX license identifiers, copyright notices, and license-specific source headers.
+
+- **License file contents:** Correct license text, copyright information, and license-specific notices.
+
+- **Project configuration:** Exact PackageReference, ProjectReference, target framework, and other MSBuild property values in generated .csproj files.
+
+- **SDK configuration:** Expected property values and configuration in the generated global.json.
+
+- **Generated documentation:** Correct source-name replacements, repository URLs, badges, and license information in the generated README.md.
+
+- **Solution configuration:** Exact project entries, project paths, and solution folder organization.
+
+Although the script executes restore, build, test, and run operations, successful execution does not guarantee that every generated configuration value, file reference, or textual substitution matches its intended value.
+
+The current assertion reports only record the existence checks performed by the script. Additional content-level validation may be introduced in future updates to improve automated verification and reduce the need for manual inspection.
 
 ---
 
@@ -962,6 +1227,48 @@ Review the failed GitHub Actions run for the specific error.
 ### The README badge does not display correctly
 
 Check the generated badge URL, GitHub user or organization, repository name, and license identifier. Confirm that the normalized repository name is used only in the badge URL and that the repository hyperlink retains the original name.
+
+<br>
+
+### SDK version cannot be resolved
+
+Verify that the SDK version specified through `--sdk-version` exists and is available in your environment.
+
+The template ***does not validate*** SDK availability during project generation.
+
+Check the installed SDK versions:
+
+`dotnet --list-sdks`
+
+Compare the requested version with the official .NET SDK release history.
+
+If the specified SDK version is unavailable, update the generated `global.json` or regenerate the project using a valid SDK version.
+
+<br>
+
+### Target framework differs from the requested value
+
+The template automatically normalizes the requested target framework when it exceeds the selected SDK version.
+
+Check the generated `.csproj` files to verify the normalized target framework.
+
+Specify an SDK version compatible with the desired target framework if you need to target a newer .NET release.
+
+<br>
+
+### The local test script cannot run
+
+Verify that PowerShell Core 7.6.8 or later installed:
+
+`$PSVersionTable`
+
+The local test suite uses .NET 8, 9, 10, and 11. Missing SDK versions may cause the corresponding test cases to fail.
+
+Also verify that the local template source had been installed:
+
+`dotnet new list landx-templates`
+
+If the template is missing or an outdated version is being used, install the template from the current repository source.
 
 ---
 

@@ -8,7 +8,7 @@
 
 LanDX.Templates is a customizable .NET CLI template for generating modern C# Class Library and Console Application projects targeting .NET 8, .NET 9, .NET 10, and .NET 11.
 
-Generate a read-to-use solution structure with .slnx, .csproj, and common development configuration files. Choose a minimal project structure, use the standard configuration, or enable optional development tooling through template parameters.
+Generate a ready-to-use solution structure with .slnx, .csproj, and common development configuration files. Choose a minimal project structure, use the standard configuration, or enable optional development tooling through template parameters.
 
 ---
 
@@ -28,23 +28,27 @@ Verify the installation:
 
 Create a Class Library using the default configuration:
 
-`dotnet new landx-templates -n MyProject`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100`
 
 Create a minimal project:
 
-`dotnet new landx-templates -n MyProject --simple`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --simple`
 
 Create a Console Application:
 
-`dotnet new landx-templates -n MyProject --project-type console`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --project-type console`
 
-Generate a project with the full preset:
+Create a project with the full preset:
 
-`dotnet new landx-templates -n MyProject --preset full`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --preset full`
 
-Generate a project with a specific license:
+Create a project with a specific license:
 
-`dotnet new landx-templates -n MyProject --license Apache-2.0`
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --license Apache-2.0`
+
+Create a project using MTP as the test runner:
+
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --test-runner MTP`
 
 ---
 
@@ -68,67 +72,146 @@ Generate a project with a specific license:
 
 ---
 
+## SDK Version and Target Framework Compatibility
+
+The `--sdk-version` parameter is required and has no default value.
+
+The template automatically normalizes the requested target framework when it exceeds the selected SDK version.
+
+For example, specifying `--sdk-version 8.0.428` together with `--target-framework net11.0` results in a project targeting `net8.0`.
+
+The template ***does not validate*** whether an arbitrary SDK version exists or is available for installation.
+
+Users are responsble for specifying a valid and available .NET SDK version. An unsupported SDK version may allow project generation to  succeed but cause subsequent .NET CLI operations to fail during SDK resolution.
+
+Verify the requested SDK version against the official .NET release information before generateing a project.
+
+[&rarr; .NET SDK Releases](https://dotnet.microsoft.com/download/dotnet)
+
+---
+
+## Requirements
+
+Install a compatible .NET SDK for the generated project's target framework and any SDK version requested by global.json.
+
+Download the .NET SDK:
+
+[.NET Download](https://dotnet.microsoft.com/download)
+
+[.NET Download (All Versions)](https://dotnet.microsoft.com/en-us/download/dotnet)
+
+---
+
 ## Features
 
-- Class Library and Console Application project types.
+- Generate Class Library and Console Application projects.
 
-- Standard, simple, and full project configurations.
+- Support .NET 8, .NET 9, .NET 10, and .NET 11 target frameworks.
 
-- Configurable SDK version and target framework.
+- Require an explicit .NET SDK version through `--sdk-version`.
 
-- Optional test and benchmark projects.
+- Automatically normalize the target framework to ensure compatibility with the selected SDK version.
 
-- Optional architecture documentation.
+- Generate SDK-compatible solution files (`.sln` for .NET SDK 8 and `.slnx` for .NET SDK 9 and later).
 
-- Optional GitHub Actions workflows.
+- Provide standard, simple, and full project configurations.
 
-- Optional centralized MSBuild and NuGet package configuration.
+- Include optional test and benchmark projects.
 
-- Multiple license templates: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, GPL-2.0-only, GPL-3.0-only, LGPL-2.1-only, AGPL-3.0-only, and MPL-2.0.
+- Support VSTest and Microsoft.Testing.Platform (MTP) test runners.
 
-- Automatic license file generation with configurable copyright information.
+- Generate runner-specific test project, package, and SDK configurations.
 
-- Automatic normalization of supported version and license inputs.
+- Include optional architecture documentation and GitHub Actions workflows.
 
+- Support centralized MSBuild and NuGet package configuration.
 
+- Support 10 open-source licenses.
+
+- Generate license-specific SPDX identifiers, copyright notices, and license headers in C# source files.
+
+- Customize license copyright information.
+
+- Automatically normalize supported SDK version, target framework, and license inputs.
+
+---
+
+## Required Options
+
+| Option               | Description                                                                     |
+|----------------------|---------------------------------------------------------------------------------|
+| `--sdk-version`      | Configures the SDK version in global.json.                                      | 
 
 ---
 
 ## Common Options
 
-| Option               | Description                                                                     |
-|----------------------|---------------------------------------------------------------------------------|
-| `--project-type`     | Selects class, classlib, lib, or console.                                       |
-| `--simple`           | Generates a minimal project without tests or optional components.               |
-| `--preset`           | Selects standard or full.                                                       |
-| `--target-framework` | Selects the target framework: .NET 8, 9, 10, or 11.                             |
-| `--sdk-version`      | Configures the SDK version in global.json.                                      |
-| `--version`          | Applies a shared version input to SDK selection and target framework selection. |
-| `--benchmarks`       | Includes the benchmark project.                                                 |
-| `--docs`             | Includes architecture documentation.                                            |
-| `--github-actions`   | Includes GitHub Actions workflows.                                              |
-| `--build-config`     | Includes shared build configuration files.                                      |
-| `--license`          | Selects the license for the generated project.                                  |
-| `--copyright-year`   | Sets the copyright year in the generated license file.                          |
-| `--copyright-owner`  | Sets the copyright owner in the generated license file.                         |
-| `--github-owner`     |  Sets the GitHub owner used in generated README links and badges.               |
-| `--github-repo`      |  Sets the GitHub repository name used in generated README links and badges.     |
+| Option               | Description                                                                       |
+|----------------------|---------------------------------------------------------------------------------- |
+| `--sdk-version`      | **Required.** Specifies the .NET SDK version used by the generated `global.json`. |
+| `--project-type`     | Selects `classlib` (default), `lib`, or `console`.                                |
+| `--simple`           | Generates a minimal project without tests or optional components.                 |
+| `--preset`           | Selects `standard` (default) or `full`.                                           |
+| `--test-runner`      | Selects `VSTest` (default) or `MTP`.                                              |
+| `--target-framework` | Selects the target framework: .NET 8, 9, 10 (default), or 11. Automatically normalized when it exceeds the selected SDK version. |
+| `--benchmarks`       | Includes the benchmark project.                                                   |
+| `--docs`             | Includes architecture documentation.                                              |
+| `--github-actions`   | Includes GitHub Actions workflows.                                                |
+| `--build-config`     | Includes shared build configuration files.                                        |
+| `--license`          | Selects the project license. (default: MIT)                                       |
+| `--copyright-year`   | Sets the copyright year in the generated license file(s) and source headers.      |
+| `--copyright-owner`  | Sets the copyright owner in the generated license file(s) and source headers.     |
+| `--github-owner`     |  Sets the GitHub owner used in generated README links and badges.                 |
+| `--github-repo`      |  Sets the repository name used in generated README links and badges.              |
 
-When conflicting version parameters are specified, `--version` takes precedence over `--sdk-version` and `--target-framework`.
+<br>
 
 When `--simple` and `--benchmarks` are specified together, `--simple` takes precedence.
 
-The default preset is standard. The full preset enables optional components and automatic stable LTS SDK and target framework selection, subject to explicit parameter precedence.
+When `--simple` and `--preset full` are specified together, `--preset full` takes precedence.
+
+The default project type is classlib (lib).
+
+The default license is MIT.
+
+The default target framework is net10.0.
+
+The default preset is standard. The full preset enables optional components and automatic stable LTS target framework selection, subject to explicit parameter precedence.
 
 For all supported values, normalization rules, examples, and generated project details, see the full documentation.
 
 ---
 
-## License Seletion
+## Test Runner
+
+Use `--test-runner` to select the test runner for the generated test project.
+
+| Value   | Description                            |
+| ------- | -------------------------------------- |
+| `VTest` | Uses the VSTest test runner (default). | 
+| `MTP`   | Uses Microsoft.Testing.Platform.       |
+
+Example:
+
+`dotnet new landx-templates -n MyProject --sdk-version 10.0.100 --test-runner MTP`
+
+The selected test runner determines the generated test project configuration and its associated NuGet package references.
+
+When MTP is selected, the template also generates SDK-specific configuration:
+
+- .NET SDK 8 and 9: Configures MTP support in the test project.
+
+- .NET SDK 10 and 11: Configures Microsoft.Testing.Platform in `global.json`.
+
+When `--build-config` or `--preset full` is enabled, the corresponding test package versions are centrally managed through `Directory.Packages.props`.
+
+---
+
+## License Selection
 
 Use `--license` to select the license for the generated project.
 
-`dotnet new landx-templates -n MyProject --license ISC`
+`dotnet new landx-templates -n MyProject --sdk-version 10 --license ISC`
 
 The following 10 licenses are supported:
 
@@ -164,21 +247,9 @@ The selected license determines the license file or files generated in the proje
 
 You can also customize the copyright information:
 
-`dotnet new landx-templates -n MyProject --license MIT --copyright-year 2026 --copyright-owner "John Doe"`
+`dotnet new landx-templates -n MyProject --sdk-version 10 --license MIT --copyright-year 2026 --copyright-owner "John Doe"`
 
 The selected license is reflected in the generated README and its corresponding license file or files.
-
----
-
-## Requirements
-
-Install a compatible .NET SDK for the generated project's target framework and any SDK version requested by global.json.
-
-Download the .NET SDK:
-
-[.NET Download](https://dotnet.microsoft.com/download)
-
-[.NET Download (All Versions)](https://dotnet.microsoft.com/en-us/download/dotnet)
 
 ---
 
