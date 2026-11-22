@@ -2,6 +2,8 @@
 #requires -PSEdition Core
 
 using namespace System
+using namespace System.Diagnostics
+using namespace System.Globalization
 using namespace System.IO
 using namespace System.Text
 using namespace System.Management.Automation
@@ -9,32 +11,86 @@ using namespace System.Management.Automation
 $script:Root = [Path]::Join($PSScriptRoot, 'artifacts')
 $script:LogRoot = [Path]::Join($PSScriptRoot, 'logs')
 
-[Directory]::CreateDirectory($script:Root)
-[Directory]::CreateDirectory($script:LogRoot)
-
-cd $script:Root
-
 $script:SectionDivider = "------------------------------------------------------"
 $script:SubSectionDivider = "------------------------------------------------------"
+
+$script:BoilerplateFiles = @(
+    '.editorconfig',
+    '.gitattributes',
+    '.gitignore',
+    'README.md'
+)
+
+$script:GnuLesserFiles = @(
+    'COPYING'
+    'COPYING.LESSER'
+)
+
+$script:BuildConfigFiles = @(
+    'Directory.Build.props',
+    'Directory.Build.targets',
+    'Directory.Packages.props'
+)
+
+$script:Artifacts = @(
+    'T01.DefaultClassLibrary',
+    'T02.DefaultSimple',
+    'T03.DefaultConsole',
+    'T04.WithBenchmarks',
+    'T05.WithDocs',
+    'T06.WithGitHubActions',
+    'T07.WithBuildConfigs',
+    'T08.SpecifiedSdkVersion',
+    'T09.SpecifiedTargetFramework',
+    'T10.FullPreset',
+    'T11.DefaultISCLicense',
+    'T12.DefaultGPLLicense',
+    'T13.DefaultLGPLLicense',
+    'T14.DefaultVSTestTestRunner',
+    'T15.DefaultMTPTestRunner',
+    'B01.SimplePrecedeBenchmarks',
+    'B02.SimpleWithDocs',
+    'B03.SimpleWithGitHubActions',
+    'B04.SimpleWithBuildConfigs',
+    'B05.WithBenchmarksDocsGitHubActions',
+    'B06.DefaultStandard',
+    'B07.FullPrecedeSimple',
+    'B08.FullWithSpecifiedSdkVersion',
+    'B09.FullWithSpecifiedTargetFramework',
+    'B10.ConsoleFull',
+    'B11.ClassLibWithSpecifiedTargetFramework',
+    'B12.ConsoleWithSpecifiedTargetFramework',
+    'B13.ClassLibWithSpecifiedTargetFrameworkBenchmarks',
+    'B14.ConsoleWithSpecifiedTargetFrameworkBenchmarks',
+    'B15.DefaultClassLibWithSln',
+    'B16.NormalizedCorrespondingTfm'
+)
+
 $script:AssertionResult = [StringBuilder]::new()
+
+[Directory]::CreateDirectory($script:Root)
+[Directory]::CreateDirectory($script:LogRoot)
 
 function Invoke-ExpectedNativeExitCode {
     [CmdletBinding()]
     param(
+        [Alias('i', 'n')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
         [string] $Name,
         
+        [Alias('exp-ex-cd')]
         [Parameter(Mandatory, Position = 1)]
         [ValidateRange(0, 255)]
         [int] $ExpectedExitCode,
         
+        [Alias('cmd')]
         [Parameter(Mandatory, Position = 2)]
         [ValidateNotNull()]
         [scriptblock] $Command
     )
     process {
-        $previousNativePreference = $PSNativeCommandUseErrorActionPreference
+        $previousNativePreference      = $PSNativeCommandUseErrorActionPreference
         $previousErrorActionPreference = $ErrorActionPreference
         
         $actualExitCode = 0
@@ -45,14 +101,14 @@ function Invoke-ExpectedNativeExitCode {
             
             & $Command
             
-            $actualExitCode = $LASTEXITCODE
+            $actualExitCode = $global:LASTEXITCODE
         } finally {
             $PSNativeCommandUseErrorActionPreference = $previousNativePreference
-            $ErrorActionPreference = $previousErrorActionPreference
+            $ErrorActionPreference                   = $previousErrorActionPreference
             
             $target = [Path]::Join($script:Root, $Name)
             if ([Directory]::Exists($target)) {
-                [Directory]::Delete($target)
+                [Directory]::Delete($target, $true)
             }
         }
         
@@ -67,16 +123,19 @@ function Invoke-ExpectedNativeExitCode {
 function New-ResultText {
     [CmdletBinding()]
     param(
+        [Alias('i', 'n')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateLength(1, 255)]
         [ValidateNotNullOrWhiteSpace()]
         [string] $Name,
         
+        [Alias('tgt')]
         [Parameter(Mandatory, Position = 1)]
         [ValidateLength(1, 255)]
         [ValidateNotNullOrWhiteSpace()]
         [string] $Target,
         
+        [Alias('fail', 'f')]
         [Parameter()]
         [switch] $Failure
     )
@@ -92,622 +151,392 @@ function New-ResultText {
     }
 }
 
+function Assert-File {
+    [CmdletBinding()]
+    param(
+        [Alias('i', 'artf', 'art')]
+        [Parameter(Mandatory, Position = 0)]
+        [ValidateNotNullOrWhiteSpace()]
+        [string] $ArtifactPath,
+        
+        [Alias('tgt-segs')]
+        [Parameter(Mandatory, Position = 1)]
+        [ValidateNotNullOrEmpty()]
+        [string[]] $TargetPathSegments,
+        
+        [Alias('disp', 'dsp')]
+        [Parameter(Mandatory, Position = 2)]
+        [ValidateNotNullOrWhiteSpace()]
+        [string] $DisplayName
+    )
+    process {
+        $resolvedArtifact = [Path]::GetFullPath($ArtifactPath, $PWD.ProviderPath)
+        $artifactName     = [Path]::GetFileName($resolvedArtifact)
+        
+        $joinedTarget     = [string]::Join([Path]::DirectorySeparatorChar, $TargetPathSegments)
+        $targetPath       = [Path]::Join('.', $joinedTarget)
+        $resolvedTarget   = [Path]::GetFullPath($targetPath, $resolvedArtifact)
+        $targetName       = [Path]::GetFileName($resolvedTarget)
+        
+        $existed = Test-Path -Path $resolvedTarget -PathType Leaf
+        
+        if (-not $existed) {
+            $resultText = New-ResultText -Name $artifactName -Target $targetName -Failure
+            
+            Write-Host $resultText -ForegroundColor DarkYellow
+            Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
+            
+            $null = $script:AssertionResult.AppendLine($resultText)
+            $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
+            
+            $splitWords = $DisplayName.Split(' ')
+            $sb = [StringBuilder]::new()
+            
+            $splitWords.PSForEach({
+                $firstElement   = [StringInfo]::GetNextTextElement($_, 0)
+                $rest           = $_.Substring($firstElement.Length)
+                $pascalCaseText = $firstElement.ToUpperInvariant() + $rest
+                
+                $sb.Append($pascalCaseText)
+            })
+            
+            $record = [ErrorRecord]::new(
+                [InvalidOperationException]::new(
+                    "Missing required $($DisplayName): ""$($targetName)""; Path: ""$($resolvedTarget)""."
+                ),
+                "MissingRequired$($sb.ToString())",
+                [ErrorCategory]::InvalidOperation,
+                $resolvedTarget
+            )
+            $PSCmdlet.ThrowTerminatingError($record)
+        }
+        
+        $resultText = New-ResultText -Name $artifactName -Target $targetName
+        
+        Write-Host $resultText -ForegroundColor DarkYellow
+        
+        $null = $script:AssertionResult.AppendLine($resultText)
+    }
+}
+
+Set-Alias -Name 'asrt-f' -Value Assert-File -Scope Script
+
 function Assert-BoilerplateFiles {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
+        [string] $ArtifactPath
     )
-    begin {
-        $boilerplateFiles = @(
-            '.editorconfig',
-            '.gitattributes',
-            '.gitignore',
-            'README.md'
-        )
-    }
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
         
-        $name = [Path]::GetFileName($resolvedPath)
-        
-        foreach ($file in $boilerplateFiles) {
-            $targetBoilerplateFile = [Path]::Join($resolvedPath, $file)
-            $targetBoilerplateFileName = [Path]::GetFileName($targetBoilerplateFile)
-            $existed = Test-Path -Path $targetBoilerplateFile
-            if (-not $existed) {
-                $resultText = New-ResultText -Name $name -Target $targetBoilerplateFileName -Failure
-                Write-Host $resultText -ForegroundColor DarkYellow
-                Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-                $null = $script:AssertionResult.AppendLine($resultText)
-                $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-                $record = [ErrorRecord]::new(
-                    [InvalidOperationException]::new(
-                        "Missing required boilerplate file: ""$targetBoilerplateFileName""; Path: ""$targetBoilerplateFile""."
-                    ),
-                    'MissingBoilerplateFile',
-                    [ErrorCategory]::InvalidOperation,
-                    $resolvedPath
-                )
-                $PSCmdlet.ThrowTerminatingError($record)
-            }
-            $resultText = New-ResultText -Name $name -Target $targetBoilerplateFileName
-            Write-Host $resultText -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-        }
+        $script:BoilerplateFiles.PSForEach({
+            $segments = @($_)
+            Assert-File `
+                -ArtifactPath $ArtifactPath `
+                -TargetPathSegments $segments `
+                -DisplayName 'boilerplate file'
+        })
     }
 }
+
+Set-Alias -Name 'asrt-bp-f' -Value Assert-BoilerplateFiles -Scope Script
+Set-Alias -Name 'asrt-bpf' -Value Assert-BoilerplateFiles -Scope Script
 
 function Assert-License {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path,
+        [string] $ArtifactPath,
         
-        [Parameter()]
+        [Alias('t')]
+        [Parameter(Position = 1)]
         [ValidateSet('Generic', 'Gnu', 'GnuLesser', IgnoreCase = $false)]
         [string] $Type = 'Generic'
     )
-    begin {
-        $gnuLesserFiles = @(
-            'COPYING'
-            'COPYING.LESSER'
-        )
-    }
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
-        
-        $name = [Path]::GetFileName($resolvedPath)
-        
-        $existed = $false
+        switch ($Type) {
+            'Generic' {
+                $segments = @('LICENSE')
                 
-        if ($Type -ceq 'Generic') {
-            $licenseName = 'LICENSE'
-            $targetLicenseFile = [Path]::Join($resolvedPath, $licenseName)
-            $targetLicenseFileName = [Path]::GetFileName($targetLicenseFile)
-            
-            $existed = Test-Path -Path $targetLicenseFile
-            
-            if (-not $existed) {
-                $resultText = New-ResultText -Name $name -Target $targetLicenseFileName -Failure
-                Write-Host $resultText -ForegroundColor DarkYellow
-                Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-                $null = $script:AssertionResult.AppendLine($resultText)
-                $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
+                Assert-File `
+                    -ArtifactPath $ArtifactPath `
+                    -TargetPathSegments $segments `
+                    -DisplayName 'license file'
+            }
+            'Gnu' {
+                $segments = @('COPYING')
+                
+                Assert-File `
+                    -ArtifactPath $ArtifactPath `
+                    -TargetPathSegments $segments `
+                    -DisplayName 'license file'
+            }
+            'GnuLesser' {
+                $script:GnuLesserFiles.PSForEach({
+                    $segments = @($_)
+                    Assert-File `
+                        -ArtifactPath $ArtifactPath `
+                        -TargetPathSegments $segments `
+                        -DisplayName 'license file'
+                })
+            }
+            default {
                 $record = [ErrorRecord]::new(
-                    [InvalidOperationException]::new(
-                        "Missing required license file: ""$targetLicenseFileName""; Path: ""$targetLicenseFile""."
+                    [UnreachableException]::new(
+                        'Unreachable code path in Assert-License.'
                     ),
-                    'MissingLicenseFile',
+                    'UnreachableCodePath',
                     [ErrorCategory]::InvalidOperation,
-                    $resolvedPath
+                    $null
                 )
                 $PSCmdlet.ThrowTerminatingError($record)
             }
-            $resultText = New-ResultText -Name $name -Target $targetLicenseFileName
-            Write-Host $resultText -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-        } elseif ($Type -ceq 'Gnu') {
-            $licenseName = 'COPYING'
-            $targetLicenseFile = [Path]::Join($resolvedPath, $licenseName)
-            $targetLicenseFileName = [Path]::GetFileName($targetLicenseFile)
-            
-            $existed = Test-Path -Path $targetLicenseFile
-            
-            if (-not $existed) {
-                $resultText = New-ResultText -Name $name -Target $targetLicenseFileName -Failure
-                Write-Host $resultText -ForegroundColor DarkYellow
-                Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-                $null = $script:AssertionResult.AppendLine($resultText)
-                $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-                $record = [ErrorRecord]::new(
-                    [InvalidOperationException]::new(
-                        "Missing required license file: ""$targetLicenseFileName""; Path: ""$targetLicenseFile""."
-                    ),
-                    'MissingLicenseFile',
-                    [ErrorCategory]::InvalidOperation,
-                    $resolvedPath
-                )
-                $PSCmdlet.ThrowTerminatingError($record)
-            }
-            $resultText = New-ResultText -Name $name -Target $targetLicenseFileName
-            Write-Host $resultText -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-        } else { # 'GnuLesser'
-            $licenses = @(
-                'COPYING',
-                'COPYING.LESSER'
-            )
-            
-            foreach ($file in $licenses) {
-                $targetLicenseFile = [Path]::Join($resolvedPath, $file)
-                $targetLicenseFileName = [Path]::GetFileName($targetLicenseFile)
-                
-                $existed = Test-Path -Path $targetLicenseFile
-                
-                if (-not $existed) {
-                    $resultText = New-ResultText -Name $name -Target $targetLicenseFileName -Failure
-                    Write-Host $resultText -ForegroundColor DarkYellow
-                    Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-                    $null = $script:AssertionResult.AppendLine($resultText)
-                    $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-                    $record = [ErrorRecord]::new(
-                        [InvalidOperationException]::new(
-                            "Missing required license file: ""$targetLicenseFileName""; Path: ""$targetLicenseFile""."
-                        ),
-                        'MissingLicenseFile',
-                        [ErrorCategory]::InvalidOperation,
-                        $resolvedPath
-                    )
-                    $PSCmdlet.ThrowTerminatingError($record)
-                }
-                $resultText = New-ResultText -Name $name -Target $targetLicenseFileName
-                Write-Host $resultText -ForegroundColor DarkYellow
-                $null = $script:AssertionResult.AppendLine($resultText)
-            }
-        }
-    }
+        } # switch block
+        
+    } # process block
 }
+
+Set-Alias -Name 'asrt-lic' -Value Assert-License -Scope Script
 
 function Assert-Solution {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path,
+        [string] $ArtifactPath,
         
+        [Alias('outd')]
         [Parameter()]
         [switch] $Outdated
     )
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
+        $resolvedArtifact = [Path]::GetFullPath($ArtifactPath, $PWD.ProviderPath)
+        $artifactName     = [Path]::GetFileName($resolvedArtifact)
         
-        $name = [Path]::GetFileName($resolvedPath)
+        $segments         = ($Outdated.IsPresent) ?
+            @("$($artifactName).sln") :
+            @("$($artifactName).slnx")
         
-        $existed = $true
-        
-        $targetSolutionFile = ($Outdated.IsPresent) ?
-            [Path]::Join($resolvedPath, "$name.sln") :
-            [Path]::Join($resolvedPath, "$name.slnx")
-        
-        $targetSolutionFileName = [Path]::GetFileName($targetSolutionFile)
-        
-        $existed = Test-Path -Path $targetSolutionFile
-        
-        if (-not $existed) {
-            $resultText = New-ResultText -Name $name -Target $targetSolutionFileName -Failure
-            Write-Host $resultText -ForegroundColor DarkYellow
-            Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-            $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-            $record = [ErrorRecord]::new(
-                [InvalidOperationException]::new(
-                    "Missing required solution file: ""$targetSolutionFileName""; Path: ""$targetSolutionFile""."
-                ),
-                'MissingSolutionFile',
-                [ErrorCategory]::InvalidOperation,
-                $resolvedPath
-            )
-            $PSCmdlet.ThrowTerminatingError($record)
-        }
-        $resultText = New-ResultText -Name $name -Target $targetSolutionFileName
-        Write-Host $resultText -ForegroundColor DarkYellow
-        $null = $script:AssertionResult.AppendLine($resultText)
+        Assert-File `
+            -ArtifactPath $ArtifactPath `
+            -TargetPathSegments $segments `
+            -DisplayName 'solution file'
     }
 }
 
-function Assert-BuildConfigs {
-    [CmdletBinding()]
-    param(
-        [Alias('i')]
-        [Parameter(Mandatory, Position = 0)]
-        [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
-    )
-    begin {
-        $buildConfigFiles = @(
-            'Directory.Build.props',
-            'Directory.Build.targets',
-            'Directory.Packages.props'
-        )
-    }
-    process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
-        
-        $name = [Path]::GetFileName($resolvedPath)
-        
-        foreach ($configFile in $buildConfigFiles) {
-            $targetConfigFile = [Path]::Join($resolvedPath, $configFile)
-            $targetConfigFileName = [Path]::GetFileName($targetConfigFile)
-            $existed = Test-Path -Path $targetConfigFile
-            if (-not $existed) {
-                $resultText = New-ResultText -Name $name -Target $targetConfigFileName -Failure
-                Write-Host $resultText -ForegroundColor DarkYellow
-                Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-                $null = $script:AssertionResult.AppendLine($resultText)
-                $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-                $record = [ErrorRecord]::new(
-                    [InvalidOperationException]::new(
-                        "Missing required MS build configuration file: ""$targetConfigFileName""; Path: ""$targetConfigFile""."
-                    ),
-                    'MissingBuildConfigFile',
-                    [ErrorCategory]::InvalidOperation,
-                    $resolvedPath
-                )
-                $PSCmdlet.ThrowTerminatingError($record)
-            }
-            $resultText = New-ResultText -Name $name -Target $targetConfigFileName
-            Write-Host $resultText -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-        }
-    }
-}
+Set-Alias -Name 'asrt-soln' -Value Assert-Solution -Scope Script
 
 function Assert-GlobalJson {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
+        [string] $ArtifactPath
     )
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
+        $segments = @('global.json')
         
-        $name = [Path]::GetFileName($resolvedPath)
-        
-        $targetJsonFile = [Path]::Join($resolvedPath, 'global.json')
-        $targetJsonFileName = [Path]::GetFileName($targetJsonFile)
-        
-        $existed = Test-Path -Path $targetJsonFile
-        
-        if (-not $existed) {
-            $resultText = New-ResultText -Name $name -Target $targetJsonFileName -Failure
-            Write-Host $resultText -ForegroundColor DarkYellow
-            Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-            $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-            $record = [ErrorRecord]::new(
-                [InvalidOperationException]::new(
-                    "Missing required global json file: ""$targetJsonFileName""; Path: ""$targetJsonFile""."
-                ),
-                'MissingGlobalJsonFile',
-                [ErrorCategory]::InvalidOperation,
-                $resolvedPath
-            )
-            $PSCmdlet.ThrowTerminatingError($record)
-        }
-        $resultText = New-ResultText -Name $name -Target $targetJsonFileName
-        Write-Host $resultText -ForegroundColor DarkYellow
-        $null = $script:AssertionResult.AppendLine($resultText)
+        Assert-File `
+            -ArtifactPath $ArtifactPath `
+            -TargetPathSegments $segments `
+            -DisplayName 'global JSON file'
     }
 }
+
+Set-Alias -Name 'asrt-glb-json' -Value Assert-GlobalJson -Scope Script
+
+function Assert-BuildConfigs {
+    [CmdletBinding()]
+    param(
+        [Alias('i', 'artf', 'art')]
+        [Parameter(Mandatory, Position = 0)]
+        [ValidateNotNullOrWhiteSpace()]
+        [string] $ArtifactPath
+    )
+    process {
+        $script:BuildConfigFiles.PSForEach({
+            $segments = @($_)
+            
+            Assert-File `
+                -ArtifactPath $ArtifactPath `
+                -TargetPathSegments $segments `
+                -DisplayName 'build config file'
+        })
+    }
+}
+
+Set-Alias -Name 'asrt-bld-conf' -Value Assert-BuildConfigs -Scope Script
+Set-Alias -Name 'asrt-bld-cfg' -Value Assert-BuildConfigs -Scope Script
 
 function Assert-Docs {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
+        [string] $ArtifactPath
     )
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
+        $segments = @('docs', 'architecture-decision-records.md')
         
-        $name = [Path]::GetFileName($resolvedPath)
-        
-        $targetDocFile = [Path]::Join($resolvedPath, 'docs', 'architecture-decision-records.md')
-        $targetDocFileName = [Path]::GetFileName($targetDocFile)
-        
-        $existed = Test-Path -Path $targetDocFile
-        
-        if (-not $existed) {
-            $resultText = New-ResultText -Name $name -Target $targetDocFileName -Failure
-            Write-Host $resultText -ForegroundColor DarkYellow
-            Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-            $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-            $record = [ErrorRecord]::new(
-                [InvalidOperationException]::new(
-                    "Missing required docs file: ""$targetDocFileName""; Path: ""$targetDocFile""."
-                ),
-                'MissingDocsFile',
-                [ErrorCategory]::InvalidOperation,
-                $resolvedPath
-            )
-            $PSCmdlet.ThrowTerminatingError($record)
-        }
-        $resultText = New-ResultText -Name $name -Target $targetDocFileName
-        Write-Host $resultText -ForegroundColor DarkYellow
-        $null = $script:AssertionResult.AppendLine($resultText)
+        Assert-File `
+            -ArtifactPath $ArtifactPath `
+            -TargetPathSegments $segments `
+            -DisplayName 'architecture docs file'
     }
 }
+
+Set-Alias -Name 'asrt-docs' -Value Assert-Docs -Scope Script
 
 function Assert-GitHubActions {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
+        [string] $ArtifactPath
     )
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
+        $segments = @('.github', 'workflows', 'workflow.yaml')
         
-        $name = [Path]::GetFileName($resolvedPath)
-        
-        $targetWorkflowFile = [Path]::Join($resolvedPath, '.github', 'workflows', 'workflow.yaml')
-        $targetWorkflowFileName = [Path]::GetFileName($targetWorkflowFile)
-        
-        $existed = Test-Path -Path $targetWorkflowFile
-        
-        if (-not $existed) {
-            $resultText = New-ResultText -Name $name -Target $targetWorkflowFileName -Failure
-            Write-Host $resultText -ForegroundColor DarkYellow
-            Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-            $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-            $record = [ErrorRecord]::new(
-                [InvalidOperationException]::new(
-                    "Missing required GitHub actions workflow file: ""$targetWorkflowFileName""; Path: ""$targetWorkflowFile""."
-                ),
-                'MissingGitHubActionsWorkflowFile',
-                [ErrorCategory]::InvalidOperation,
-                $resolvedPath
-            )
-            $PSCmdlet.ThrowTerminatingError($record)
-        }
-        $resultText = New-ResultText -Name $name -Target $targetWorkflowFileName
-        Write-Host $resultText -ForegroundColor DarkYellow
-        $null = $script:AssertionResult.AppendLine($resultText)
+        Assert-File `
+            -ArtifactPath $ArtifactPath `
+            -TargetPathSegments $segments `
+            -DisplayName 'GitHub Actions workflow file'
     }
 }
+
+Set-Alias -Name 'asrt-actions' -Value Assert-GitHubActions -Scope Script
+Set-Alias -Name 'asrt-acts' -Value Assert-GitHubActions -Scope Script
+Set-Alias -Name 'asrt-gha' -Value Assert-GitHubActions -Scope Script
 
 function Assert-ClassLib {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
+        [string] $ArtifactPath
     )
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
+        $resolvedArtifact = [Path]::GetFullPath($ArtifactPath, $PWD.ProviderPath)
+        $artifactName     = [Path]::GetFileName($resolvedArtifact)
         
-        $name = [Path]::GetFileName($resolvedPath)
-        
-        $classLibFiles = @(
-            [Path]::Join($resolvedPath, 'src', $name, 'MyClass.cs'),
-            [Path]::Join($resolvedPath, 'src', $name, "$name.csproj")
+        $files            = @(
+            'MyClass.cs',
+            "$($artifactName).csproj"
         )
         
-        foreach ($file in $classLibFiles) {
-            $targetClassLibFileName = [Path]::GetFileName($file)
-            $existed = Test-Path -Path $file
-            if (-not $existed) {
-                $resultText = New-ResultText -Name $name -Target $targetClassLibFileName -Failure
-                Write-Host $resultText -ForegroundColor DarkYellow
-                Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-                $null = $script:AssertionResult.AppendLine($resultText)
-                $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-                $record = [ErrorRecord]::new(
-                    [InvalidOperationException]::new(
-                        "Missing required class library source file: ""$targetClassLibFileName""; Path: ""$file""."
-                    ),
-                    'MissingClassLibrarySourceFile',
-                    [ErrorCategory]::InvalidOperation,
-                    $resolvedPath
-                )
-                $PSCmdlet.ThrowTerminatingError($record)
-            }
-            $resultText = New-ResultText -Name $name -Target $targetClassLibFileName
-            Write-Host $resultText -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-        }
+        $files.PSForEach({
+            $segments = @('src', $artifactName, $_)
+            
+            Assert-File `
+                -ArtifactPath $ArtifactPath `
+                -TargetPathSegments $segments `
+                -DisplayName 'source file'
+        })
     }
 }
+
+Set-Alias -Name 'asrt-cls-lib' -Value Assert-ClassLib -Scope Script
+Set-Alias -Name 'asrt-lib' -Value Assert-ClassLib -Scope Script
 
 function Assert-Console {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
+        [string] $ArtifactPath
     )
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
+        $resolvedArtifact = [Path]::GetFullPath($ArtifactPath, $PWD.ProviderPath)
+        $artifactName     = [Path]::GetFileName($resolvedArtifact)
         
-        $name = [Path]::GetFileName($resolvedPath)
-        
-        $consoleFiles = @(
-            [Path]::Join($resolvedPath, 'src', $name, 'MyClass.cs'),
-            [Path]::Join($resolvedPath, 'src', $name, 'Program.cs'),
-            [Path]::Join($resolvedPath, 'src', $name, "$name.csproj")
+        $files            = @(
+            'MyClass.cs',
+            'Program.cs',
+            "$($artifactName).csproj"
         )
         
-        foreach ($file in $consoleFiles) {
-            $targetConsoleFileName = [Path]::GetFileName($file)
-            $existed = Test-Path -Path $file
-            if (-not $existed) {
-                $resultText = New-ResultText -Name $name -Target $targetConsoleFileName -Failure
-                Write-Host $resultText -ForegroundColor DarkYellow
-                Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-                $null = $script:AssertionResult.AppendLine($resultText)
-                $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-                $record = [ErrorRecord]::new(
-                    [InvalidOperationException]::new(
-                        "Missing required console source file: ""$targetConsoleFileName""; Path: ""$file""."
-                    ),
-                    'MissingConsoleSourceFile',
-                    [ErrorCategory]::InvalidOperation,
-                    $resolvedPath
-                )
-                $PSCmdlet.ThrowTerminatingError($record)
-            }
-            $resultText = New-ResultText -Name $name -Target $targetConsoleFileName
-            Write-Host $resultText -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-        }
+        $files.PSForEach({
+            $segments = @('src', $artifactName, $_)
+            
+            Assert-File `
+                -ArtifactPath $ArtifactPath `
+                -TargetPathSegments $segments `
+                -DisplayName 'source file'
+        })
     }
 }
+
+Set-Alias -Name 'asrt-con' -Value Assert-Console -Scope Script
 
 function Assert-Tests {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
+        [string] $ArtifactPath
     )
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
+        $resolvedArtifact = [Path]::GetFullPath($ArtifactPath, $PWD.ProviderPath)
+        $artifactName     = [Path]::GetFileName($resolvedArtifact)
         
-        $name = [Path]::GetFileName($resolvedPath)
-        
-        $testFiles = @(
-            [Path]::Join($resolvedPath, 'tests', "$name.Tests", 'UnitTest1.cs'),
-            [Path]::Join($resolvedPath, 'tests', "$name.Tests", "$name.Tests.csproj")
+        $files            = @(
+            'UnitTest1.cs',
+            "$($artifactName).Tests.csproj"
         )
         
-        foreach ($file in $testFiles) {
-            $targetTestFileName = [Path]::GetFileName($file)
-            $existed = Test-Path -Path $file
-            if (-not $existed) {
-                $resultText = New-ResultText -Name $name -Target $targetTestFileName -Failure
-                Write-Host $resultText -ForegroundColor DarkYellow
-                Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-                $null = $script:AssertionResult.AppendLine($resultText)
-                $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-                $record = [ErrorRecord]::new(
-                    [InvalidOperationException]::new(
-                        "Missing required test file: ""$targetTestFileName""; Path: ""$file""."
-                    ),
-                    'MissingTestFile',
-                    [ErrorCategory]::InvalidOperation,
-                    $resolvedPath
-                )
-                $PSCmdlet.ThrowTerminatingError($record)
-            }
-            $resultText = New-ResultText -Name $name -Target $targetTestFileName
-            Write-Host $resultText -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-        }
+        $files.PSForEach({
+            $segments = @('tests', "$($artifactName).Tests", $_)
+            
+            Assert-File `
+                -ArtifactPath $ArtifactPath `
+                -TargetPathSegments $segments `
+                -DisplayName 'test file'
+        })
     }
 }
+
+Set-Alias -Name 'asrt-tsts' -Value Assert-Tests -Scope Script
 
 function Assert-Benchmarks {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
+        [string] $ArtifactPath
     )
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
+        $resolvedArtifact = [Path]::GetFullPath($ArtifactPath, $PWD.ProviderPath)
+        $artifactName     = [Path]::GetFileName($resolvedArtifact)
         
-        $name = [Path]::GetFileName($resolvedPath)
-        
-        $benchmarkFiles = @(
-            [Path]::Join($resolvedPath, 'benchmarks', "$name.Benchmarks", 'Benchmarks.cs'),
-            [Path]::Join($resolvedPath, 'benchmarks', "$name.Benchmarks", "$name.Benchmarks.csproj")
+        $files            = @(
+            'Benchmarks.cs',
+            "$($artifactName).Benchmarks.csproj"
         )
         
-        foreach ($file in $benchmarkFiles) {
-            $targetBenchmarkFileName = [Path]::GetFileName($file)
-            $existed = Test-Path -Path $file
-            if (-not $existed) {
-                $resultText = New-ResultText -Name $name -Target $targetBenchmarkFileName -Failure
-                Write-Host $resultText -ForegroundColor DarkYellow
-                Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-                $null = $script:AssertionResult.AppendLine($resultText)
-                $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
-                $record = [ErrorRecord]::new(
-                    [InvalidOperationException]::new(
-                        "Missing required benchmark file: ""$targetBenchmarkFileName""; Path: ""$file""."
-                    ),
-                    'MissingBenchmarkFile',
-                    [ErrorCategory]::InvalidOperation,
-                    $resolvedPath
-                )
-                $PSCmdlet.ThrowTerminatingError($record)
-            }
-            $resultText = New-ResultText -Name $name -Target $targetBenchmarkFileName
-            Write-Host $resultText -ForegroundColor DarkYellow
-            $null = $script:AssertionResult.AppendLine($resultText)
-        }
+        $files.PSForEach({
+            $segments = @('benchmarks', "$($artifactName).Benchmarks", $_)
+            
+            Assert-File `
+                -ArtifactPath $ArtifactPath `
+                -TargetPathSegments $segments `
+                -DisplayName 'benchmark file'
+        })
     }
 }
 
-function Invoke-DotnetCliTest {
-    [CmdletBinding()]
-    param(
-        [Alias('i')]
-        [Parameter(Mandatory, Position = 0)]
-        [ValidateNotNullOrWhiteSpace()]
-        [string] $Path,
-        
-        [Parameter()]
-        [ValidateSet('ClassLib', 'Console', IgnoreCase = $false)]
-        [string] $ProjectType = 'ClassLib',
-        
-        [Parameter()]
-        [switch] $Simple,
-        
-        [Parameter()]
-        [switch] $FullPreset
-    )
-    process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
-        
-        cd $resolvedPath
-        
-        $name = [Path]::GetFileName($resolvedPath)
-        
-        $prefix = $name.Substring(
-            0,
-            $name.IndexOf('.')
-        )
-        
-        Write-Host "------------------------------------------------------" -ForegroundColor DarkCyan
-        Write-Host "    $($prefix): dotnet clean" -ForegroundColor DarkCyan
-        Write-Host "------------------------------------------------------" -ForegroundColor DarkCyan
-        dotnet clean
-        
-        Write-Host "------------------------------------------------------" -ForegroundColor DarkCyan
-        Write-Host "    $($prefix): dotnet restore" -ForegroundColor DarkCyan
-        Write-Host "------------------------------------------------------" -ForegroundColor DarkCyan
-        dotnet restore
-        
-        Write-Host "------------------------------------------------------" -ForegroundColor DarkCyan
-        Write-Host "    $($prefix): dotnet build --no-restore" -ForegroundColor DarkCyan
-        Write-Host "------------------------------------------------------" -ForegroundColor DarkCyan
-        dotnet build --no-restore
-        
-        if (-not $Simple.IsPresent -or $FullPreset.IsPresent) {
-            Write-Host "------------------------------------------------------" -ForegroundColor DarkCyan
-            Write-Host "    $($prefix): dotnet test --no-build" -ForegroundColor DarkCyan
-            Write-Host "------------------------------------------------------" -ForegroundColor DarkCyan
-            dotnet test --no-build
-        }
-        
-        if ($ProjectType -eq 'Console') {
-            Write-Host "------------------------------------------------------" -ForegroundColor DarkCyan
-            Write-Host "    $($prefix): dotnet run --project \" -ForegroundColor DarkCyan
-            Write-Host "        src/$($name)/$($name).csproj" -ForegroundColor DarkCyan
-            Write-Host "------------------------------------------------------" -ForegroundColor DarkCyan
-            dotnet run --project "src/$($name)/$($name).csproj"
-        }
-        
-        cd $script:Root
-    }
-}
+Set-Alias -Name 'asrt-benchs' -Value Assert-Benchmarks -Scope Script
 
 function Write-Section {
     [CmdletBinding()]
@@ -715,107 +544,230 @@ function Write-Section {
         [Alias('i')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Target
+        [string] $ArtifactName
     )
     process {
-        $date = Get-Date
-        $localDateTime = $date.ToString("yyyy-MM-ddTHH:mm:ssK")
-        $universalDateTime = $date.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        $date              = Get-Date
+        $localDateTime     = $date.ToString("yyyy-MM-ddTHH:mm:ssK", [CultureInfo]::InvariantCulture)
+        $universalDateTime = $date.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", [CultureInfo]::InvariantCulture)
         
         Write-Host "`n$script:SectionDivider" -ForegroundColor Green
-        Write-Host $Target -ForegroundColor Green
+        Write-Host $ArtifactName -ForegroundColor Green
         Write-Host "$script:SectionDivider`n" -ForegroundColor Green
         
-        $sectionStart = "`nLocal Date Time: $localDateTime`n" +
-        "`nUniversal Date Time: $universalDateTime`n" +
-        "`n$script:SectionDivider" +
-        "`n$Target" +
-        "`n$script:SectionDivider`n"
+        $section = "`nLocal Date Time: $($localDateTime)`n" +
+            "`nUniversal Date Time: $($universalDateTime)`n" +
+            "`n$($script:SectionDivider)" +
+            "`n$($ArtifactName)" +
+            "`n$($script:SectionDivider)`n"
         
-        $null = $script:AssertionResult.AppendLine($sectionStart)
+        $null = $script:AssertionResult.AppendLine($section)
     }
 }
+
+Set-Alias -Name 'wrt-sec' -Value Write-Section -Scope Script
+
+function Write-Subsection {
+    [CmdletBinding(DefaultParameterSetName = 'Normal')]
+    param(
+        [Parameter(ParameterSetName = 'Normal')]
+        [Parameter(ParameterSetName = 'Path')]
+        [Alias('i', 'artf', 'art')]
+        [Parameter(Mandatory, Position = 0)]
+        [ValidateNotNullOrWhiteSpace()]
+        [string] $ResolvedArtifactPath,
+        
+        [Parameter(ParameterSetName = 'Normal')]
+        [Parameter(ParameterSetName = 'Path')]
+        [Alias('cmd')]
+        [Parameter(Mandatory, Position = 1)]
+        [ValidateNotNullOrWhiteSpace()]
+        [string] $Command,
+        
+        [Parameter(ParameterSetName = 'Path')]
+        [Alias('cmd-path')]
+        [string] $CommandPath
+    )
+    process {
+        $artifactName   = [Path]::GetFileName($ResolvedArtifactPath)
+        $artifactPrefix = $artifactName.Substring(0, $artifactName.IndexOf('.'))
+        Write-Host $script:SubSectionDivider -ForegroundColor DarkCyan
+        
+        switch ($PSCmdlet.ParameterSetName) {
+            'Normal' {
+                Write-Host "    $($artifactPrefix): $($Command)" -ForegroundColor DarkCyan
+            }
+            'Path' {
+                Write-Host "    $($artifactPrefix): $($Command) \" -ForegroundColor DarkCyan
+                Write-Host "        $($CommandPath)" -ForegroundColor DarkCyan
+            }
+        }
+        
+        Write-Host $script:SubSectionDivider -ForegroundColor DarkCyan
+    }
+}
+
+Set-Alias -Name 'wrt-subsec' -Value Write-Subsection -Scope Script
+
+function Invoke-DotnetCliTest {
+    [CmdletBinding()]
+    param(
+        [Alias('i', 'artf', 'art')]
+        [Parameter(Mandatory, Position = 0)]
+        [ValidateNotNullOrWhiteSpace()]
+        [string] $ArtifactPath,
+        
+        [Alias('proj-type', 'proj')]
+        [Parameter(Position = 1)]
+        [ValidateSet('ClassLib', 'Console', IgnoreCase = $false)]
+        [string] $ProjectType = 'ClassLib',
+        
+        [Alias('smp')]
+        [Parameter()]
+        [switch] $Simple,
+        
+        [Alias('f-prst', 'fprst')]
+        [Parameter()]
+        [switch] $FullPreset
+    )
+    process {
+        $resolvedArtifact = [Path]::GetFullPath($ArtifactPath, $PWD.ProviderPath)
+        
+        cd $resolvedArtifact
+        
+        try {
+            Write-Subsection `
+                -ResolvedArtifactPath $resolvedArtifact `
+                -Command 'dotnet clean'
+            
+            dotnet clean
+            
+            Write-Subsection `
+                -ResolvedArtifactPath $resolvedArtifact `
+                -Command 'dotnet restore'
+            
+            dotnet restore
+            
+            Write-Subsection `
+                -ResolvedArtifactPath $resolvedArtifact `
+                -Command 'dotnet build --no-restore'
+            
+            dotnet build --no-restore
+            
+            if (-not $Simple.IsPresent -or $FullPreset.IsPresent) {
+                Write-Subsection `
+                    -ResolvedArtifactPath $resolvedArtifact `
+                    -Command 'dotnet test --no-build'
+                
+                dotnet test --no-build
+            }
+            
+            if ($ProjectType -eq 'Console') {
+                $artifactName   = [Path]::GetFileName($resolvedArtifact)
+                $csProjectPath  = "src/$($artifactName)/$($artifactName).csproj"
+                
+                Write-Subsection `
+                    -ResolvedArtifactPath $resolvedArtifact `
+                    -Command "dotnet run --project" `
+                    -CommandPath """$($csProjectPath)"""
+                
+                dotnet run --project $csProjectPath
+            }
+        } finally {
+            cd $script:Root
+        }
+    }
+}
+
+Set-Alias -Name 'inv-net-cli-tst' -Value Invoke-DotnetCliTest -Scope Script
+Set-Alias -Name 'inv-net-tst' -Value Invoke-DotnetCliTest -Scope Script
 
 function Assert-Artifacts {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path,
+        [string] $ArtifactPath,
         
-        [Parameter()]
+        [Alias('lic-type', 'lic')]
+        [Parameter(Position = 1)]
         [ValidateSet('Generic', 'Gnu', 'GnuLesser', IgnoreCase = $false)]
         [string] $LicenseType = 'Generic',
         
-        [Parameter()]
+        [Alias('proj-type', 'proj')]
+        [Parameter(Position = 2)]
         [ValidateSet('ClassLib', 'Console', IgnoreCase = $false)]
         [string] $ProjectType = 'ClassLib',
         
+        [Alias('smp')]
         [Parameter()]
         [switch] $Simple,
         
+        [Alias('bench')]
         [Parameter()]
         [switch] $Benchmarks,
         
         [Parameter()]
         [switch] $Docs,
         
+        [Alias('actions', 'ga')]
         [Parameter()]
         [switch] $GitHubActions,
         
+        [Alias('outd')]
         [Parameter()]
         [switch] $Outdated,
         
+        [Alias('bld-conf', 'bld-cfg')]
         [Parameter()]
         [switch] $BuildConfig,
         
-        [Parameter()]
-        [switch] $GlobalJson,
-        
+        [Alias('f-prst', 'fprst')]
         [Parameter()]
         [switch] $FullPreset
     )
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
-        $projectName = [Path]::GetFileName($resolvedPath)
-        Write-Section -Target $projectName
+        $resolvedArtifact = [Path]::GetFullPath($ArtifactPath, $PWD.ProviderPath)
+        $artifactName     = [Path]::GetFileName($resolvedArtifact)
+        
+        Write-Section -ArtifactName $artifactName
         
         Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
         $null = $script:AssertionResult.AppendLine($script:SubSectionDivider)
         
-        Assert-BoilerplateFiles -Path $Path
-        Assert-License -Path $Path -Type $LicenseType
-        Assert-Solution -Path $Path -Outdated:$Outdated
-        Assert-GlobalJson -Path $Path
+        Assert-BoilerplateFiles -ArtifactPath $ArtifactPath
+        Assert-License -ArtifactPath $ArtifactPath -Type $LicenseType
+        Assert-Solution -ArtifactPath $ArtifactPath -Outdated:$Outdated
+        Assert-GlobalJson -ArtifactPath $ArtifactPath
         
         switch ($ProjectType) {
             'ClassLib' {
-                Assert-ClassLib -Path $Path
+                Assert-ClassLib -ArtifactPath $ArtifactPath
             }
             'Console' {
-                Assert-Console -Path $Path
+                Assert-Console -ArtifactPath $ArtifactPath
             }
         }
         
         if (-not $Simple.IsPresent -or $FullPreset.IsPresent) {
-            Assert-Tests -Path $Path
+            Assert-Tests -ArtifactPath $ArtifactPath
         }
         
         if ($Benchmarks.IsPresent -or $FullPreset.IsPresent) {
-            Assert-Benchmarks -Path $Path
+            Assert-Benchmarks -ArtifactPath $ArtifactPath
         }
         
         if ($Docs.IsPresent -or $FullPreset.IsPresent) {
-            Assert-Docs -Path $Path
+            Assert-Docs -ArtifactPath $ArtifactPath
         }
         
         if ($GitHubActions.IsPresent -or $FullPreset.IsPresent) {
-            Assert-GitHubActions -Path $Path
+            Assert-GitHubActions -ArtifactPath $ArtifactPath
         }
         
         if ($BuildConfig.IsPresent -or $FullPreset.IsPresent) {
-            Assert-BuildConfigs -Path $Path
+            Assert-BuildConfigs -ArtifactPath $ArtifactPath
         }
         
         Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
@@ -823,56 +775,64 @@ function Assert-Artifacts {
     }
 }
 
+Set-Alias -Name 'asrt-artfs' -Value Assert-Artifacts -Scope Script
+Set-Alias -Name 'asrt-arts' -Value Assert-Artifacts -Scope Script
+
 function Invoke-TestCase {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path,
+        [string] $ArtifactPath,
         
+        [Alias('lic-type', 'lic')]
         [Parameter()]
         [ValidateSet('Generic', 'Gnu', 'GnuLesser', IgnoreCase = $false)]
         [string] $LicenseType = 'Generic',
         
+        [Alias('proj-type', 'proj')]
         [Parameter()]
         [ValidateSet('ClassLib', 'Console', IgnoreCase = $false)]
         [string] $ProjectType = 'ClassLib',
         
+        [Alias('smp')]
         [Parameter()]
         [switch] $Simple,
         
+        [Alias('bench')]
         [Parameter()]
         [switch] $Benchmarks,
         
         [Parameter()]
         [switch] $Docs,
         
+        [Alias('actions', 'ga')]
         [Parameter()]
         [switch] $GitHubActions,
         
+        [Alias('outd')]
         [Parameter()]
         [switch] $Outdated,
         
+        [Alias('bld-conf', 'bld-cfg')]
         [Parameter()]
         [switch] $BuildConfig,
         
-        [Parameter()]
-        [switch] $GlobalJson,
-        
+        [Alias('f-prst', 'fprst')]
         [Parameter()]
         [switch] $FullPreset
     )
     process {
-        $null = $script:AssertionResult.Clear()
+        $null             = $script:AssertionResult.Clear()
         
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
-        $artifact = "$([Path]::GetFileName($resolvedPath)).log"
-        $logFile = [Path]::Join($script:LogRoot, $artifact)
+        $resolvedArtifact = [Path]::GetFullPath($ArtifactPath, $PWD.ProviderPath)
+        $artifact         = "$([Path]::GetFileName($resolvedArtifact)).log"
+        $logFile          = [Path]::Join($script:LogRoot, $artifact)
         
         try {
             Assert-Artifacts `
-                -Path $Path `
+                -ArtifactPath $ArtifactPath `
                 -LicenseType $LicenseType `
                 -ProjectType $ProjectType `
                 -Simple:$Simple `
@@ -881,41 +841,47 @@ function Invoke-TestCase {
                 -GitHubActions:$GitHubActions `
                 -Outdated:$Outdated `
                 -BuildConfig:$BuildConfig `
-                -GlobalJson:$GlobalJson `
                 -FullPreset:$FullPreset
         } finally {
             [File]::WriteAllText($logFile, $script:AssertionResult.ToString(), [Encoding]::UTF8)
         }
         
         Invoke-DotnetCliTest `
-            -Path $Path `
+            -ArtifactPath $ArtifactPath `
             -ProjectType $ProjectType `
             -Simple:$Simple `
             -FullPreset:$FullPreset
     }
 }
 
+Set-Alias -Name 'inv-tst-case' -Value Invoke-TestCase -Scope Script
+
 function Write-CommandSection {
     [CmdletBinding()]
     param(
+        [Alias('i', 'n')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateLength(1, 255)]
         [ValidateNotNullOrWhiteSpace()]
         [string] $Name,
         
+        [Alias('cmd')]
         [Parameter(Mandatory, Position = 1)]
         [ValidateLength(1, 255)]
         [ValidateNotNullOrWhiteSpace()]
         [string] $Command,
         
+        [Alias('desc')]
         [Parameter(Mandatory, Position = 2)]
         [ValidateLength(1, 255)]
         [ValidateNotNullOrWhiteSpace()]
         [string] $Description,
         
+        [Alias('addm', 'add')]
         [Parameter(Position = 3)]
         [string] $Addendum,
         
+        [Alias('exp-fail')]
         [Parameter()]
         [switch] $ExpectedFailure
     )
@@ -925,14 +891,11 @@ function Write-CommandSection {
             "Command Test - $($Name):"
         
         Write-Host "`n$script:SectionDivider" -ForegroundColor Green
-        
         Write-Host $title -ForegroundColor Green
-        
         Write-Host $Command -ForegroundColor Green -BackgroundColor DarkGray -NoNewline
         
         if ($PSBoundParameters.ContainsKey('Addendum')) {
             Write-Host "`n$Addendum" -ForegroundColor Green
-            
             Write-Host $Description -ForegroundColor Green
         } else {
             Write-Host "`n$Description" -ForegroundColor Green
@@ -942,33 +905,42 @@ function Write-CommandSection {
     }
 }
 
+Set-Alias -Name 'wrt-cmd-sec' -Value Write-CommandSection -Scope Script
+
 function Invoke-CommandTestCase {
     [CmdletBinding()]
     param(
+        [Alias('i', 'n')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateLength(1, 255)]
         [ValidateNotNullOrWhiteSpace()]
         [string] $Name,
         
+        [Alias('cmd')]
         [Parameter(Mandatory, Position = 1)]
         [ValidateLength(1, 255)]
         [ValidateNotNullOrWhiteSpace()]
         [string] $Command,
         
+        [Alias('desc')]
         [Parameter(Mandatory, Position = 2)]
         [ValidateLength(1, 255)]
         [ValidateNotNullOrWhiteSpace()]
         [string] $Description,
         
+        [Alias('scrp')]
         [Parameter(Mandatory, Position = 3)]
         [ValidateNotNull()]
         [scriptblock] $Script,
         
+        [Alias('addm', 'add')]
         [Parameter(Position = 4)]
         [string] $Addendum,
         
+        [Alias('exp-ex-cd')]
         [Parameter(Position = 5)]
-        [string] $ExpectedExitCode
+        [ValidateRange(0, 255)]
+        [int] $ExpectedExitCode
     )
     process {
         $namePrefix = $Name.Substring(0, $Name.IndexOf('.'))
@@ -983,11 +955,13 @@ function Invoke-CommandTestCase {
             -ExpectedFailure:$expectedFailure
         
         Write-Host $script:SubSectionDivider -ForegroundColor DarkYellow
-        
         Write-Host "Result:`n" -ForegroundColor DarkYellow
         
         if ($expectedFailure) {
-            Invoke-ExpectedNativeExitCode -Name $namePrefix -ExpectedExitCode $ExpectedExitCode -Command $Script
+            Invoke-ExpectedNativeExitCode `
+                -Name $namePrefix `
+                -ExpectedExitCode $ExpectedExitCode `
+                -Command $Script
         } else {
             & $Script
         }
@@ -996,137 +970,71 @@ function Invoke-CommandTestCase {
     }
 }
 
+Set-Alias -Name 'inv-cmd-tst' -Value Invoke-CommandTestCase -Scope Script
+
 function Remove-Artifact {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf', 'art')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
+        [string] $ArtifactPath
     )
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
+        $resolvedArtifact = [Path]::GetFullPath($ArtifactPath, $script:Root)
         
-        if ([Directory]::Exists($resolvedPath)) {
-            [Directory]::Delete($resolvedPath, $true)
+        if ([Directory]::Exists($resolvedArtifact)) {
+            [Directory]::Delete($resolvedArtifact, $true)
         }
     }
 }
 
+Set-Alias -Name 'rm-artf' -Value Remove-Artifact -Scope Script
+Set-Alias -Name 'rm-art' -Value Remove-Artifact -Scope Script
+
 function Remove-Artifacts {
     [CmdletBinding()]
-    param(
-        [Alias('i')]
-        [Parameter(Mandatory, Position = 0)]
-        [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
-    )
+    param()
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
-        $targets = @(
-            [Path]::Join($resolvedPath, 'T01.DefaultClassLibrary'),
-            [Path]::Join($resolvedPath, 'T02.DefaultSimple'),
-            [Path]::Join($resolvedPath, 'T03.DefaultConsole'),
-            [Path]::Join($resolvedPath, 'T04.WithBenchmarks'),
-            [Path]::Join($resolvedPath, 'T05.WithDocs'),
-            [Path]::Join($resolvedPath, 'T06.WithGitHubActions'),
-            [Path]::Join($resolvedPath, 'T07.WithBuildConfigs'),
-            [Path]::Join($resolvedPath, 'T08.SpecifiedSdkVersion'),
-            [Path]::Join($resolvedPath, 'T09.SpecifiedTargetFramework'),
-            [Path]::Join($resolvedPath, 'T10.FullPreset'),
-            [Path]::Join($resolvedPath, 'T11.DefaultIscLicense'),
-            [Path]::Join($resolvedPath, 'T12.DefaultGplLicense'),
-            [Path]::Join($resolvedPath, 'T13.DefaultLgplLicense'),
-            [Path]::Join($resolvedPath, 'T14.DefaultVsTestTestRunner'),
-            [Path]::Join($resolvedPath, 'T15.DefaultMtpTestRunner'),
-            [Path]::Join($resolvedPath, 'B01.SimplePrecedeBenchmarks'),
-            [Path]::Join($resolvedPath, 'B02.SimpleWithDocs'),
-            [Path]::Join($resolvedPath, 'B03.SimpleWithGitHubActions'),
-            [Path]::Join($resolvedPath, 'B04.SimpleWithBuildConfigs'),
-            [Path]::Join($resolvedPath, 'B05.WithBenchmarksDocsGitHubActions'),
-            [Path]::Join($resolvedPath, 'B06.DefaultStandard'),
-            [Path]::Join($resolvedPath, 'B07.FullPrecedeSimple'),
-            [Path]::Join($resolvedPath, 'B08.FullWithSpecifiedSdkVersion'),
-            [Path]::Join($resolvedPath, 'B09.FullWithSpecifiedTargetFramework'),
-            [Path]::Join($resolvedPath, 'B10.ConsoleFull'),
-            [Path]::Join($resolvedPath, 'B11.ClassLibWithSpecifiedTargetFramework'),
-            [Path]::Join($resolvedPath, 'B12.ConsoleWithSpecifiedTargetFramework'),
-            [Path]::Join($resolvedPath, 'B13.ClassLibWithSpecifiedTargetFrameworkBenchmarks'),
-            [Path]::Join($resolvedPath, 'B14.ConsoleWithSpecifiedTargetFrameworkBenchmarks'),
-            [Path]::Join($resolvedPath, 'B15.DefaultClassLibWithSln'),
-            [Path]::Join($resolvedPath, 'B16.NormalizedCorrespondingTfm')
-        )
-        foreach ($target in $targets) {
-            Remove-Artifact -Path $target
-        }
+        $script:Artifacts.PSForEach({
+            Remove-Artifact -ArtifactPath "./$($_)"
+        })
     }
 }
+
+Set-Alias -Name 'rm-artfs' -Value Remove-Artifacts -Scope Script
+Set-Alias -Name 'rm-arts' -Value Remove-Artifacts -Scope Script
 
 function Remove-Log {
     [CmdletBinding()]
     param(
-        [Alias('i')]
+        [Alias('i', 'artf-log', 'art-log')]
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
+        [string] $ArtifactLogRoot
     )
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
+        $resolvedArtifactLog = [Path]::GetFullPath($ArtifactLogRoot, $script:LogRoot)
         
-        if ([File]::Exists($resolvedPath)) {
-            [File]::Delete($resolvedPath)
+        if ([File]::Exists($resolvedArtifactLog)) {
+            [File]::Delete($resolvedArtifactLog)
         }
     }
 }
 
+Set-Alias -Name 'rm-log' -Value Remove-Log -Scope Script
+
 function Remove-Logs {
     [CmdletBinding()]
-    param(
-        [Alias('i')]
-        [Parameter(Mandatory, Position = 0)]
-        [ValidateNotNullOrWhiteSpace()]
-        [string] $Path
-    )
+    param()
     process {
-        $resolvedPath = [Path]::GetFullPath($Path, $PWD.ProviderPath)
-        $targets = @(
-            [Path]::Join($resolvedPath, 'T01.DefaultClassLibrary.log'),
-            [Path]::Join($resolvedPath, 'T02.DefaultSimple.log'),
-            [Path]::Join($resolvedPath, 'T03.DefaultConsole.log'),
-            [Path]::Join($resolvedPath, 'T04.WithBenchmarks.log'),
-            [Path]::Join($resolvedPath, 'T05.WithDocs.log'),
-            [Path]::Join($resolvedPath, 'T06.WithGitHubActions.log'),
-            [Path]::Join($resolvedPath, 'T07.WithBuildConfigs.log'),
-            [Path]::Join($resolvedPath, 'T08.SpecifiedSdkVersion.log'),
-            [Path]::Join($resolvedPath, 'T09.SpecifiedTargetFramework.log'),
-            [Path]::Join($resolvedPath, 'T10.FullPreset.log'),
-            [Path]::Join($resolvedPath, 'T11.DefaultIscLicense.log'),
-            [Path]::Join($resolvedPath, 'T12.DefaultGplLicense.log'),
-            [Path]::Join($resolvedPath, 'T13.DefaultLgplLicense.log'),
-            [Path]::Join($resolvedPath, 'T14.DefaultVsTestTestRunner.log'),
-            [Path]::Join($resolvedPath, 'T15.DefaultMtpTestRunner.log'),
-            [Path]::Join($resolvedPath, 'B01.SimplePrecedeBenchmarks.log'),
-            [Path]::Join($resolvedPath, 'B02.SimpleWithDocs.log'),
-            [Path]::Join($resolvedPath, 'B03.SimpleWithGitHubActions.log'),
-            [Path]::Join($resolvedPath, 'B04.SimpleWithBuildConfigs.log'),
-            [Path]::Join($resolvedPath, 'B05.WithBenchmarksDocsGitHubActions.log'),
-            [Path]::Join($resolvedPath, 'B06.DefaultStandard.log'),
-            [Path]::Join($resolvedPath, 'B07.FullPrecedeSimple.log'),
-            [Path]::Join($resolvedPath, 'B08.FullWithSpecifiedSdkVersion.log'),
-            [Path]::Join($resolvedPath, 'B09.FullWithSpecifiedTargetFramework.log'),
-            [Path]::Join($resolvedPath, 'B10.ConsoleFull.log'),
-            [Path]::Join($resolvedPath, 'B11.ClassLibWithSpecifiedTargetFramework.log'),
-            [Path]::Join($resolvedPath, 'B12.ConsoleWithSpecifiedTargetFramework.log'),
-            [Path]::Join($resolvedPath, 'B13.ClassLibWithSpecifiedTargetFrameworkBenchmarks.log'),
-            [Path]::Join($resolvedPath, 'B14.ConsoleWithSpecifiedTargetFrameworkBenchmarks.log'),
-            [Path]::Join($resolvedPath, 'B15.DefaultClassLibWithSln.log'),
-            [Path]::Join($resolvedPath, 'B16.NormalizedCorrespondingTfm.log')
-        )
-        foreach ($target in $targets) {
-            Remove-Log -Path $target
-        }
+        $script:Artifacts.PSForEach({
+            Remove-Log -ArtifactLogRoot "./$($_).log"
+        })
     }
 }
+
+Set-Alias -Name 'rm-logs' -Value Remove-Logs -Scope Script
 
 $previousNativePreference = $global:PSNativeCommandUseErrorActionPreference
 $previousActionPreference = $global:ErrorActionPreference
@@ -1134,149 +1042,156 @@ $previousActionPreference = $global:ErrorActionPreference
 $global:PSNativeCommandUseErrorActionPreference = $true
 $global:ErrorActionPreference = [ActionPreference]::Stop
 
-Remove-Artifacts -Path $script:Root
-Remove-Logs -Path $script:LogRoot
+cd $script:Root
 
-dotnet new landx-templates -n T01.DefaultClassLibrary -o T01.DefaultClassLibrary --sdk-version 10
-Invoke-TestCase -Path ./T01.DefaultClassLibrary -ProjectType ClassLib -LicenseType Generic
+try {
+    Remove-Artifacts
+    Remove-Logs
 
-dotnet new landx-templates -n T02.DefaultSimple -o T02.DefaultSimple --sdk-version 10 --simple
-Invoke-TestCase -Path ./T02.DefaultSimple -ProjectType ClassLib -LicenseType Generic -Simple
+    dotnet new landx-templates -n T01.DefaultClassLibrary -o T01.DefaultClassLibrary --sdk-version 10
+    Invoke-TestCase -ArtifactPath ./T01.DefaultClassLibrary -ProjectType ClassLib -LicenseType Generic
 
-dotnet new landx-templates -n T03.DefaultConsole -o T03.DefaultConsole --sdk-version 10 --project-type console
-Invoke-TestCase -Path ./T03.DefaultConsole -ProjectType Console -LicenseType Generic
+    dotnet new landx-templates -n T02.DefaultSimple -o T02.DefaultSimple --sdk-version 10 --simple
+    Invoke-TestCase -ArtifactPath ./T02.DefaultSimple -ProjectType ClassLib -LicenseType Generic -Simple
 
-dotnet new landx-templates -n T04.WithBenchmarks -o T04.WithBenchmarks --sdk-version 10 --benchmarks
-Invoke-TestCase -Path ./T04.WithBenchmarks -ProjectType ClassLib -LicenseType Generic -Benchmarks
+    dotnet new landx-templates -n T03.DefaultConsole -o T03.DefaultConsole --sdk-version 10 --project-type console
+    Invoke-TestCase -ArtifactPath ./T03.DefaultConsole -ProjectType Console -LicenseType Generic
 
-dotnet new landx-templates -n T05.WithDocs -o T05.WithDocs --sdk-version 10 --docs
-Invoke-TestCase -Path ./T05.WithDocs -ProjectType ClassLib -LicenseType Generic -Docs
+    dotnet new landx-templates -n T04.WithBenchmarks -o T04.WithBenchmarks --sdk-version 10 --benchmarks
+    Invoke-TestCase -ArtifactPath ./T04.WithBenchmarks -ProjectType ClassLib -LicenseType Generic -Benchmarks
 
-dotnet new landx-templates -n T06.WithGitHubActions -o T06.WithGitHubActions --sdk-version 10 --github-actions
-Invoke-TestCase -Path ./T06.WithGitHubActions -ProjectType ClassLib -LicenseType Generic -GitHubActions
+    dotnet new landx-templates -n T05.WithDocs -o T05.WithDocs --sdk-version 10 --docs
+    Invoke-TestCase -ArtifactPath ./T05.WithDocs -ProjectType ClassLib -LicenseType Generic -Docs
 
-dotnet new landx-templates -n T07.WithBuildConfigs -o T07.WithBuildConfigs --sdk-version 10 --build-config
-Invoke-TestCase -Path ./T07.WithBuildConfigs -ProjectType ClassLib -LicenseType Generic -BuildConfig
+    dotnet new landx-templates -n T06.WithGitHubActions -o T06.WithGitHubActions --sdk-version 10 --github-actions
+    Invoke-TestCase -ArtifactPath ./T06.WithGitHubActions -ProjectType ClassLib -LicenseType Generic -GitHubActions
 
-dotnet new landx-templates -n T08.SpecifiedSdkVersion -o T08.SpecifiedSdkVersion --sdk-version 9
-Invoke-TestCase -Path ./T08.SpecifiedSdkVersion -ProjectType ClassLib -LicenseType Generic
+    dotnet new landx-templates -n T07.WithBuildConfigs -o T07.WithBuildConfigs --sdk-version 10 --build-config
+    Invoke-TestCase -ArtifactPath ./T07.WithBuildConfigs -ProjectType ClassLib -LicenseType Generic -BuildConfig
 
-dotnet new landx-templates -n T09.SpecifiedTargetFramework -o T09.SpecifiedTargetFramework --sdk-version 10 --target-framework 9
-Invoke-TestCase -Path ./T09.SpecifiedTargetFramework -ProjectType ClassLib -LicenseType Generic
+    dotnet new landx-templates -n T08.SpecifiedSdkVersion -o T08.SpecifiedSdkVersion --sdk-version 9
+    Invoke-TestCase -ArtifactPath ./T08.SpecifiedSdkVersion -ProjectType ClassLib -LicenseType Generic
 
-dotnet new landx-templates -n T10.FullPreset -o T10.FullPreset --sdk-version 10 --preset full
-Invoke-TestCase -Path ./T10.FullPreset -ProjectType ClassLib -LicenseType Generic -FullPreset
+    dotnet new landx-templates -n T09.SpecifiedTargetFramework -o T09.SpecifiedTargetFramework --sdk-version 10 --target-framework 9
+    Invoke-TestCase -ArtifactPath ./T09.SpecifiedTargetFramework -ProjectType ClassLib -LicenseType Generic
 
-dotnet new landx-templates -n T11.DefaultIscLicense -o T11.DefaultIscLicense --sdk-version 10 --license ISC --copyright-year 2026 --copyright-owner "John Doe"
-Invoke-TestCase -Path ./T11.DefaultIscLicense -ProjectType ClassLib -LicenseType Generic
+    dotnet new landx-templates -n T10.FullPreset -o T10.FullPreset --sdk-version 10 --preset full
+    Invoke-TestCase -ArtifactPath ./T10.FullPreset -ProjectType ClassLib -LicenseType Generic -FullPreset
 
-dotnet new landx-templates -n T12.DefaultGplLicense -o T12.DefaultGplLicense --sdk-version 10 --license GPL-2.0-only --copyright-year 2026 --copyright-owner "John Doe"
-Invoke-TestCase -Path ./T12.DefaultGplLicense -ProjectType ClassLib -LicenseType Gnu
+    dotnet new landx-templates -n T11.DefaultIscLicense -o T11.DefaultIscLicense --sdk-version 10 --license ISC --copyright-year 2026 --copyright-owner "John Doe"
+    Invoke-TestCase -ArtifactPath ./T11.DefaultIscLicense -ProjectType ClassLib -LicenseType Generic
 
-dotnet new landx-templates -n T13.DefaultLgplLicense -o T13.DefaultLgplLicense --sdk-version 10 --license LGPL-2.1-only --copyright-year 2026 --copyright-owner "John Doe"
-Invoke-TestCase -Path ./T13.DefaultLgplLicense -ProjectType ClassLib -LicenseType GnuLesser
+    dotnet new landx-templates -n T12.DefaultGplLicense -o T12.DefaultGplLicense --sdk-version 10 --license GPL-2.0-only --copyright-year 2026 --copyright-owner "John Doe"
+    Invoke-TestCase -ArtifactPath ./T12.DefaultGplLicense -ProjectType ClassLib -LicenseType Gnu
 
-dotnet new landx-templates -n T14.DefaultVsTestTestRunner -o T14.DefaultVsTestTestRunner --sdk-version 10 --test-runner VSTest
-Invoke-TestCase -Path ./T14.DefaultVsTestTestRunner -ProjectType ClassLib -LicenseType Generic
+    dotnet new landx-templates -n T13.DefaultLgplLicense -o T13.DefaultLgplLicense --sdk-version 10 --license LGPL-2.1-only --copyright-year 2026 --copyright-owner "John Doe"
+    Invoke-TestCase -ArtifactPath ./T13.DefaultLgplLicense -ProjectType ClassLib -LicenseType GnuLesser
 
-dotnet new landx-templates -n T15.DefaultMtpTestRunner -o T15.DefaultMtpTestRunner --sdk-version 10 --test-runner MTP
-Invoke-TestCase -Path ./T15.DefaultMtpTestRunner -ProjectType ClassLib -LicenseType Generic
+    dotnet new landx-templates -n T14.DefaultVsTestTestRunner -o T14.DefaultVsTestTestRunner --sdk-version 10 --test-runner VSTest
+    Invoke-TestCase -ArtifactPath ./T14.DefaultVsTestTestRunner -ProjectType ClassLib -LicenseType Generic
 
-dotnet new landx-templates -n B01.SimplePrecedeBenchmarks -o B01.SimplePrecedeBenchmarks --sdk-version 10 --simple --benchmarks
-Invoke-TestCase -Path ./B01.SimplePrecedeBenchmarks -ProjectType ClassLib -LicenseType Generic -simple
+    dotnet new landx-templates -n T15.DefaultMtpTestRunner -o T15.DefaultMtpTestRunner --sdk-version 10 --test-runner MTP
+    Invoke-TestCase -ArtifactPath ./T15.DefaultMtpTestRunner -ProjectType ClassLib -LicenseType Generic
 
-dotnet new landx-templates -n B02.SimpleWithDocs -o B02.SimpleWithDocs --sdk-version 10 --simple --docs
-Invoke-TestCase -Path ./B02.SimpleWithDocs -ProjectType ClassLib -LicenseType Generic -Simple -Docs
+    dotnet new landx-templates -n B01.SimplePrecedeBenchmarks -o B01.SimplePrecedeBenchmarks --sdk-version 10 --simple --benchmarks
+    Invoke-TestCase -ArtifactPath ./B01.SimplePrecedeBenchmarks -ProjectType ClassLib -LicenseType Generic -simple
 
-dotnet new landx-templates -n B03.SimpleWithGitHubActions -o B03.SimpleWithGitHubActions --sdk-version 10 --simple --github-actions
-Invoke-TestCase -Path ./B03.SimpleWithGitHubActions -ProjectType ClassLib -LicenseType Generic -Simple -GitHubActions
+    dotnet new landx-templates -n B02.SimpleWithDocs -o B02.SimpleWithDocs --sdk-version 10 --simple --docs
+    Invoke-TestCase -ArtifactPath ./B02.SimpleWithDocs -ProjectType ClassLib -LicenseType Generic -Simple -Docs
 
-dotnet new landx-templates -n B04.SimpleWithBuildConfigs -o B04.SimpleWithBuildConfigs --sdk-version 10 --simple --build-config
-Invoke-TestCase -Path ./B04.SimpleWithBuildConfigs -ProjectType ClassLib -LicenseType Generic -Simple -BuildConfig
+    dotnet new landx-templates -n B03.SimpleWithGitHubActions -o B03.SimpleWithGitHubActions --sdk-version 10 --simple --github-actions
+    Invoke-TestCase -ArtifactPath ./B03.SimpleWithGitHubActions -ProjectType ClassLib -LicenseType Generic -Simple -GitHubActions
 
-dotnet new landx-templates -n B05.WithBenchmarksDocsGitHubActions -o B05.WithBenchmarksDocsGitHubActions --sdk-version 10 --benchmarks --docs --github-actions
-Invoke-TestCase -Path ./B05.WithBenchmarksDocsGitHubActions -ProjectType ClassLib -LicenseType Generic -Benchmarks -Docs -GitHubActions
+    dotnet new landx-templates -n B04.SimpleWithBuildConfigs -o B04.SimpleWithBuildConfigs --sdk-version 10 --simple --build-config
+    Invoke-TestCase -ArtifactPath ./B04.SimpleWithBuildConfigs -ProjectType ClassLib -LicenseType Generic -Simple -BuildConfig
 
-dotnet new landx-templates -n B06.DefaultStandard -o B06.DefaultStandard --sdk-version 10 --preset standard
-Invoke-TestCase -Path ./B06.DefaultStandard -ProjectType ClassLib -LicenseType Generic
+    dotnet new landx-templates -n B05.WithBenchmarksDocsGitHubActions -o B05.WithBenchmarksDocsGitHubActions --sdk-version 10 --benchmarks --docs --github-actions
+    Invoke-TestCase -ArtifactPath ./B05.WithBenchmarksDocsGitHubActions -ProjectType ClassLib -LicenseType Generic -Benchmarks -Docs -GitHubActions
 
-dotnet new landx-templates -n B07.FullPrecedeSimple -o B07.FullPrecedeSimple --sdk-version 10 --preset full --simple
-Invoke-TestCase -Path ./B07.FullPrecedeSimple -ProjectType ClassLib -LicenseType Generic -FullPreset
+    dotnet new landx-templates -n B06.DefaultStandard -o B06.DefaultStandard --sdk-version 10 --preset standard
+    Invoke-TestCase -ArtifactPath ./B06.DefaultStandard -ProjectType ClassLib -LicenseType Generic
 
-dotnet new landx-templates -n B08.FullWithSpecifiedSdkVersion -o B08.FullWithSpecifiedSdkVersion --sdk-version 11 --preset full
-Invoke-TestCase -Path ./B08.FullWithSpecifiedSdkVersion -ProjectType ClassLib -LicenseType Generic -FullPreset
+    dotnet new landx-templates -n B07.FullPrecedeSimple -o B07.FullPrecedeSimple --sdk-version 10 --preset full --simple
+    Invoke-TestCase -ArtifactPath ./B07.FullPrecedeSimple -ProjectType ClassLib -LicenseType Generic -FullPreset
 
-dotnet new landx-templates -n B09.FullWithSpecifiedTargetFramework -o B09.FullWithSpecifiedTargetFramework --preset full --target-framework 8 --sdk-version 10
-Invoke-TestCase -Path ./B09.FullWithSpecifiedTargetFramework -ProjectType ClassLib -LicenseType Generic -FullPreset
+    dotnet new landx-templates -n B08.FullWithSpecifiedSdkVersion -o B08.FullWithSpecifiedSdkVersion --sdk-version 11 --preset full
+    Invoke-TestCase -ArtifactPath ./B08.FullWithSpecifiedSdkVersion -ProjectType ClassLib -LicenseType Generic -FullPreset
 
-dotnet new landx-templates -n B10.ConsoleFull -o B10.ConsoleFull --sdk-version 10 --preset full --project-type console
-Invoke-TestCase -Path ./B10.ConsoleFull -ProjectType Console -LicenseType Generic -FullPreset
+    dotnet new landx-templates -n B09.FullWithSpecifiedTargetFramework -o B09.FullWithSpecifiedTargetFramework --preset full --target-framework 8 --sdk-version 10
+    Invoke-TestCase -ArtifactPath ./B09.FullWithSpecifiedTargetFramework -ProjectType ClassLib -LicenseType Generic -FullPreset
 
-dotnet new landx-templates -n B11.ClassLibWithSpecifiedTargetFramework -o B11.ClassLibWithSpecifiedTargetFramework --project-type classlib --target-framework 9 --sdk-version 10
-Invoke-TestCase -Path ./B11.ClassLibWithSpecifiedTargetFramework -ProjectType ClassLib -LicenseType Generic
+    dotnet new landx-templates -n B10.ConsoleFull -o B10.ConsoleFull --sdk-version 10 --preset full --project-type console
+    Invoke-TestCase -ArtifactPath ./B10.ConsoleFull -ProjectType Console -LicenseType Generic -FullPreset
 
-dotnet new landx-templates -n B12.ConsoleWithSpecifiedTargetFramework -o B12.ConsoleWithSpecifiedTargetFramework --project-type console --target-framework 10 --sdk-version 10
-Invoke-TestCase -Path ./B12.ConsoleWithSpecifiedTargetFramework -ProjectType Console -LicenseType Generic
+    dotnet new landx-templates -n B11.ClassLibWithSpecifiedTargetFramework -o B11.ClassLibWithSpecifiedTargetFramework --project-type classlib --target-framework 9 --sdk-version 10
+    Invoke-TestCase -ArtifactPath ./B11.ClassLibWithSpecifiedTargetFramework -ProjectType ClassLib -LicenseType Generic
 
-dotnet new landx-templates -n B13.ClassLibWithSpecifiedTargetFrameworkBenchmarks -o B13.ClassLibWithSpecifiedTargetFrameworkBenchmarks --project-type classlib --target-framework 8 --benchmarks --sdk-version 10
-Invoke-TestCase -Path ./B13.ClassLibWithSpecifiedTargetFrameworkBenchmarks -ProjectType ClassLib -LicenseType Generic -Benchmarks
+    dotnet new landx-templates -n B12.ConsoleWithSpecifiedTargetFramework -o B12.ConsoleWithSpecifiedTargetFramework --project-type console --target-framework 10 --sdk-version 10
+    Invoke-TestCase -ArtifactPath ./B12.ConsoleWithSpecifiedTargetFramework -ProjectType Console -LicenseType Generic
 
-dotnet new landx-templates -n B14.ConsoleWithSpecifiedTargetFrameworkBenchmarks -o B14.ConsoleWithSpecifiedTargetFrameworkBenchmarks --project-type console --target-framework 11 --benchmarks --sdk-version 11
-Invoke-TestCase -Path ./B14.ConsoleWithSpecifiedTargetFrameworkBenchmarks -ProjectType Console -LicenseType Generic -Benchmarks
+    dotnet new landx-templates -n B13.ClassLibWithSpecifiedTargetFrameworkBenchmarks -o B13.ClassLibWithSpecifiedTargetFrameworkBenchmarks --project-type classlib --target-framework 8 --benchmarks --sdk-version 10
+    Invoke-TestCase -ArtifactPath ./B13.ClassLibWithSpecifiedTargetFrameworkBenchmarks -ProjectType ClassLib -LicenseType Generic -Benchmarks
 
-dotnet new landx-templates -n B15.DefaultClassLibWithSln -o B15.DefaultClassLibWithSln --sdk-version 8 --target-framework 8
-Invoke-TestCase -Path ./B15.DefaultClassLibWithSln -ProjectType ClassLib -LicenseType Generic -Outdated
+    dotnet new landx-templates -n B14.ConsoleWithSpecifiedTargetFrameworkBenchmarks -o B14.ConsoleWithSpecifiedTargetFrameworkBenchmarks --project-type console --target-framework 11 --benchmarks --sdk-version 11
+    Invoke-TestCase -ArtifactPath ./B14.ConsoleWithSpecifiedTargetFrameworkBenchmarks -ProjectType Console -LicenseType Generic -Benchmarks
 
-dotnet new landx-templates -n B16.NormalizedCorrespondingTfm -o B16.NormalizedCorrespondingTfm --sdk-version 9 --target-framework 10
-Invoke-TestCase -Path ./B16.NormalizedCorrespondingTfm -ProjectType ClassLib -LicenseType Generic
+    dotnet new landx-templates -n B15.DefaultClassLibWithSln -o B15.DefaultClassLibWithSln --sdk-version 8 --target-framework 8
+    Invoke-TestCase -ArtifactPath ./B15.DefaultClassLibWithSln -ProjectType ClassLib -LicenseType Generic -Outdated
 
-Invoke-CommandTestCase `
-    -Name C00.ShowHelpInfo `
-    -Command 'dotnet new landx-templates --help' `
-    -Description "`nIt should show help information." `
-    -Script { dotnet new landx-templates --help }
+    dotnet new landx-templates -n B16.NormalizedCorrespondingTfm -o B16.NormalizedCorrespondingTfm --sdk-version 9 --target-framework 10
+    Invoke-TestCase -ArtifactPath ./B16.NormalizedCorrespondingTfm -ProjectType ClassLib -LicenseType Generic
 
-Invoke-CommandTestCase `
-    -Name C01.ListLanDXTemplates `
-    -Command 'dotnet new list landx-templates' `
-    -Description "`nIt should match and show LanDX.Templates as the result." `
-    -Script { dotnet new list landx-templates }
+    Invoke-CommandTestCase `
+        -Name C00.ShowHelpInfo `
+        -Command 'dotnet new landx-templates --help' `
+        -Description "`nIt should show help information." `
+        -Script { dotnet new landx-templates --help }
 
-Invoke-CommandTestCase `
-    -Name E00.MissingRequiredSdkVersionParam `
-    -Command 'dotnet new landx-templates -n E00' `
-    -Description "It should fail and show related information." `
-    -Script { dotnet new landx-templates -n E00 } `
-    -Addendum "`n(missing required --sdk-version)" `
-    -ExpectedExitCode 102
+    Invoke-CommandTestCase `
+        -Name C01.ListLanDXTemplates `
+        -Command 'dotnet new list landx-templates' `
+        -Description "`nIt should match and show LanDX.Templates as the result." `
+        -Script { dotnet new list landx-templates }
 
-Invoke-CommandTestCase `
-    -Name E01.InvalidProjectType `
-    -Command 'dotnet new landx-templates -n E01 --project-type invalid' `
-    -Description "`nIt should fail and show the correct choices." `
-    -Script { dotnet new landx-templates -n E01 --project-type invalid } `
-    -ExpectedExitCode 127
+    Invoke-CommandTestCase `
+        -Name E00.MissingRequiredSdkVersionParam `
+        -Command 'dotnet new landx-templates -n E00' `
+        -Description "It should fail and show related information." `
+        -Script { dotnet new landx-templates -n E00 } `
+        -Addendum "`n(missing required --sdk-version)" `
+        -ExpectedExitCode 102
 
-Invoke-CommandTestCase `
-    -Name E02.InvalidTargetFramework `
-    -Command 'dotnet new landx-templates -n E02 --target-framework 99' `
-    -Description "`nIt should fail and show the correct choices." `
-    -Script { dotnet new landx-templates -n E02 --target-framework 99 } `
-    -ExpectedExitCode 127
+    Invoke-CommandTestCase `
+        -Name E01.InvalidProjectType `
+        -Command 'dotnet new landx-templates -n E01 --project-type invalid' `
+        -Description "`nIt should fail and show the correct choices." `
+        -Script { dotnet new landx-templates -n E01 --project-type invalid } `
+        -ExpectedExitCode 127
 
-Invoke-CommandTestCase `
-    -Name E03.InvalidPreset `
-    -Command 'dotnet new landx-templates -n E03 --preset invalid' `
-    -Description "`nIt should fail and show the correct choices." `
-    -Script { dotnet new landx-templates -n E03 --preset invalid } `
-    -ExpectedExitCode 127
+    Invoke-CommandTestCase `
+        -Name E02.InvalidTargetFramework `
+        -Command 'dotnet new landx-templates -n E02 --target-framework 99' `
+        -Description "`nIt should fail and show the correct choices." `
+        -Script { dotnet new landx-templates -n E02 --target-framework 99 } `
+        -ExpectedExitCode 127
 
-Invoke-CommandTestCase `
-    -Name E04.InvalidLicense `
-    -Command 'dotnet new landx-templates -n E04 --license invalid' `
-    -Description "`nIt should fail and show the correct choices." `
-    -Script { dotnet new landx-templates -n E04 --license invalid } `
-    -ExpectedExitCode 127
+    Invoke-CommandTestCase `
+        -Name E03.InvalidPreset `
+        -Command 'dotnet new landx-templates -n E03 --preset invalid' `
+        -Description "`nIt should fail and show the correct choices." `
+        -Script { dotnet new landx-templates -n E03 --preset invalid } `
+        -ExpectedExitCode 127
+
+    Invoke-CommandTestCase `
+        -Name E04.InvalidLicense `
+        -Command 'dotnet new landx-templates -n E04 --license invalid' `
+        -Description "`nIt should fail and show the correct choices." `
+        -Script { dotnet new landx-templates -n E04 --license invalid } `
+        -ExpectedExitCode 127
+} finally {
+    $path = [Path]::GetFullPath('..', $script:Root)
+    cd $path
+}
 
 $global:PSNativeCommandUseErrorActionPreference = $previousNativePreference
 $global:ErrorActionPreference = $previousActionPreference
