@@ -24,7 +24,7 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Pack
-        run: dotnet pack -c Release -o ./artifacts
+        run: dotnet pack ./LanDX.Templates.csproj -c Release -o ./artifacts
 
       - name: NuGet Login
         uses: NuGet/login@v1
