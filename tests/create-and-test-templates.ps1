@@ -11,7 +11,7 @@ using namespace System.Management.Automation
 $script:Root = [Path]::Join($PSScriptRoot, 'artifacts')
 $script:LogRoot = [Path]::Join($PSScriptRoot, 'logs')
 
-$script:SectionDivider = "------------------------------------------------------"
+$script:SectionDivider = "======================================================"
 $script:SubSectionDivider = "------------------------------------------------------"
 
 $script:BoilerplateFiles = @(
