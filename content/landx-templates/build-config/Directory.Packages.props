@@ -16,6 +16,8 @@
     <!--#else -->
     <PackageVersion Include="xunit.v3.mtp-off" Version="4.0.3" />
     <!--#endif -->
+    <!--#if (Preset == 'full' || (!Simple && Benchmarks)) -->
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+    <!--#endif -->
   </ItemGroup>
 </Project>
