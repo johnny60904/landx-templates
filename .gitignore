@@ -487,3 +487,4 @@ $RECYCLE.BIN/
 **/obj/
 tests/artifacts/
 tests/logs/
+artifacts/
